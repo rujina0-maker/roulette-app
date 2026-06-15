@@ -1921,7 +1921,7 @@
       if (!state.autoMode) return;
       clearRoundTimers();
       state.roundPhase = "betting";
-      state.countdown = 15;
+      state.countdown = 25;
       setStatus("Betting is open.");
       render();
       state.roundTimerId = window.setInterval(() => {
@@ -1935,7 +1935,7 @@
       if (!state.autoMode) return;
       clearRoundTimers();
       state.roundPhase = "closed";
-      state.countdown = 2;
+      state.countdown = 5;
       setStatus("No more bets.");
       render();
       state.roundTimerId = window.setInterval(() => {
@@ -2082,7 +2082,7 @@
       hideOutcome();
       openMobileSpinLayer();
       state.lastResult = null;
-      state.lastBets = new Map(state.bets);
+      if (state.bets.size > 0) state.lastBets = new Map(state.bets);
       const order = getOrder();
       const index = Math.floor(Math.random() * order.length);
       const result = order[index];
