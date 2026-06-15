@@ -134,7 +134,6 @@
       display: grid;
       place-items: center;
       min-height: 310px;
-      --launch-radius: -46px;
       --ball-radius: -126px;
       --pocket-radius: -106px;
       --tag-radius: -150px;
@@ -1184,7 +1183,6 @@
 
       .wheel-wrap {
         min-height: 318px;
-        --launch-radius: -48px;
         --ball-radius: -118px;
         --pocket-radius: -96px;
         --tag-radius: -140px;
@@ -2121,7 +2119,6 @@
       const index = Math.floor(Math.random() * order.length);
       const result = order[index];
       const resultAngle = getWheelImageAngle(result);
-      const startRotation = state.ballRotation;
       state.ballRotation = state.ballRotation - 1440 + normalizeAngle(resultAngle - state.ballRotation);
 
       els.spinButton.disabled = true;
@@ -2133,43 +2130,14 @@
       els.resultMeta.textContent = "Ball in motion";
       els.ball.classList.remove("clatter");
       els.wheelWrap.classList.remove("clatter");
-      els.ball.style.transition = "none";
-      els.ball.style.transform = `rotate(${startRotation}deg) translateY(var(--launch-radius))`;
-      void els.ball.offsetWidth;
+      if (isMobileLayout()) void els.ball.offsetWidth;
+      els.ball.style.transition = "transform 4.2s cubic-bezier(.16, .8, .1, 1)";
+      els.ball.style.transform = `rotate(${state.ballRotation}deg) translateY(var(--ball-radius))`;
       els.ballTag.textContent = result;
       els.ballTag.classList.remove("show");
       els.ballTag.style.transform = `rotate(${state.ballRotation}deg) translateY(var(--tag-radius))`;
 
-      animateBallLaunch(startRotation, state.ballRotation);
       window.setTimeout(() => settleSpin(result), 4300);
-    }
-
-    function animateBallLaunch(startRotation, finalRotation) {
-      const hops = [
-        { t: 0, angle: 24, radius: "var(--launch-radius)", duration: 95 },
-        { t: 105, angle: 72, radius: "-78px", duration: 115 },
-        { t: 245, angle: 136, radius: "-58px", duration: 110 },
-        { t: 380, angle: 220, radius: "-96px", duration: 130 },
-        { t: 545, angle: 330, radius: "var(--ball-radius)", duration: 175 }
-      ];
-      els.ball.classList.add("clatter");
-      els.wheelWrap.classList.add("clatter");
-      hops.forEach((hop) => {
-        window.setTimeout(() => {
-          els.ball.style.transition = `transform ${hop.duration}ms cubic-bezier(.18, .98, .22, 1)`;
-          els.ball.style.transform = `rotate(${startRotation - hop.angle}deg) translateY(${hop.radius})`;
-        }, hop.t);
-      });
-      window.setTimeout(() => {
-        els.ball.classList.remove("clatter");
-        els.wheelWrap.classList.remove("clatter");
-        els.ball.style.transition = "transform 3.25s cubic-bezier(.13, .74, .11, 1)";
-        els.ball.style.transform = `rotate(${finalRotation}deg) translateY(var(--ball-radius))`;
-      }, 760);
-      window.setTimeout(() => {
-        els.ball.style.transition = "transform 520ms cubic-bezier(.19, .86, .18, 1)";
-        els.ball.style.transform = `rotate(${finalRotation}deg) translateY(var(--pocket-radius))`;
-      }, 3740);
     }
 
     function normalizeAngle(angle) {
