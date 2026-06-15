@@ -362,6 +362,21 @@
       gap: 8px;
     }
 
+    .recharge-button {
+      min-height: 42px;
+      border: 1px solid rgba(255, 211, 107, 0.48);
+      background: linear-gradient(180deg, rgba(21, 116, 61, 0.94), rgba(6, 58, 31, 0.94));
+      color: #fff7d1;
+      cursor: pointer;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .recharge-button:disabled {
+      opacity: 0.55;
+      cursor: default;
+    }
+
     .metric {
       padding: 10px;
       background: rgba(0, 0, 0, 0.24);
@@ -1267,6 +1282,11 @@
         gap: 6px;
       }
 
+      .mobile-hud .recharge-button {
+        min-height: 36px;
+        font-size: 12px;
+      }
+
       .mobile-actions {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1492,6 +1512,7 @@
             <span id="selectedChip" class="value">100</span>
           </div>
         </div>
+        <button id="rechargeButton" class="recharge-button" type="button">Recharge +5K</button>
         <div class="actions">
           <button id="spinButton" class="primary" type="button">Spin</button>
           <button id="undoBetButton" class="secondary" type="button">Undo Bet</button>
@@ -1530,6 +1551,7 @@
             <span id="mobileSelectedChip" class="value">100</span>
           </div>
         </div>
+        <button id="mobileRechargeButton" class="recharge-button" type="button">Recharge +5K</button>
         <div class="mobile-actions">
           <button id="mobileSpinButton" class="primary" type="button">Spin</button>
           <button id="mobileUndoBetButton" class="secondary" type="button">Undo Bet</button>
@@ -1621,6 +1643,8 @@
       mobileBalance: document.getElementById("mobileBalance"),
       mobileTotalBet: document.getElementById("mobileTotalBet"),
       mobileSelectedChip: document.getElementById("mobileSelectedChip"),
+      rechargeButton: document.getElementById("rechargeButton"),
+      mobileRechargeButton: document.getElementById("mobileRechargeButton"),
       spinButton: document.getElementById("spinButton"),
       autoButton: document.getElementById("autoButton"),
       undoBetButton: document.getElementById("undoBetButton"),
@@ -2054,6 +2078,14 @@
       render();
     }
 
+    function rechargeBalance() {
+      const amount = 5000;
+      state.balance += amount;
+      saveBalance();
+      setStatus(`Test recharge +${formatMoney(amount)}.`);
+      render();
+    }
+
     function formatBetLabel(key) {
       const { type, value } = parseBet(key);
       if (type === "number") return `number ${value}`;
@@ -2340,11 +2372,13 @@
     });
     els.spinButton.addEventListener("click", spin);
     els.autoButton.addEventListener("click", () => setAutoMode(!state.autoMode));
+    els.rechargeButton.addEventListener("click", rechargeBalance);
     els.undoBetButton.addEventListener("click", undoBet);
     els.lastBetButton.addEventListener("click", restoreLastBet);
     els.clearButton.addEventListener("click", clearBets);
     els.mobileSpinButton.addEventListener("click", spin);
     els.mobileAutoButton.addEventListener("click", () => setAutoMode(!state.autoMode));
+    els.mobileRechargeButton.addEventListener("click", rechargeBalance);
     els.mobileUndoBetButton.addEventListener("click", undoBet);
     els.mobileLastBetButton.addEventListener("click", restoreLastBet);
     els.mobileClearButton.addEventListener("click", clearBets);
