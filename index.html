@@ -115,6 +115,7 @@
       gap: 8px;
     }
 
+    .settings-button,
     .auto-toggle {
       border: 1px solid rgba(255, 211, 107, 0.44);
       background: rgba(255, 255, 255, 0.07);
@@ -124,7 +125,92 @@
       text-transform: uppercase;
     }
 
+    .settings-button {
+      min-height: 36px;
+      padding: 8px 12px;
+    }
+
     .auto-toggle.active {
+      background: var(--gold);
+      color: #1a1107;
+    }
+
+    .settings-overlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      place-items: center;
+      padding: 18px;
+      background: rgba(4, 3, 3, 0.72);
+      z-index: 40;
+    }
+
+    .settings-overlay.open {
+      display: grid;
+    }
+
+    .settings-panel {
+      width: min(420px, 100%);
+      border: 1px solid rgba(255, 211, 107, 0.5);
+      background:
+        radial-gradient(circle at 50% 0%, rgba(255, 211, 107, 0.16), transparent 14rem),
+        linear-gradient(180deg, rgba(16, 70, 38, 0.98), rgba(6, 26, 17, 0.98));
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.62);
+      padding: 16px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .settings-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--gold-light);
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .settings-close {
+      width: 36px;
+      height: 36px;
+      border: 1px solid rgba(255, 211, 107, 0.38);
+      background: rgba(0, 0, 0, 0.18);
+      color: var(--cream);
+      cursor: pointer;
+      font-size: 20px;
+      line-height: 1;
+    }
+
+    .settings-group {
+      display: grid;
+      gap: 7px;
+    }
+
+    .settings-label {
+      color: rgba(245, 230, 189, 0.74);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .segmented {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border: 1px solid rgba(255, 211, 107, 0.34);
+      overflow: hidden;
+    }
+
+    .segmented button {
+      min-height: 40px;
+      border: 0;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--cream);
+      cursor: pointer;
+      font-weight: 900;
+    }
+
+    .segmented button.active {
       background: var(--gold);
       color: #1a1107;
     }
@@ -1263,7 +1349,12 @@
       }
 
       .quick-toggles {
-        grid-template-columns: 2fr 1fr;
+        display: none;
+      }
+
+      .mobile-settings-row {
+        display: grid;
+        grid-template-columns: 1fr 1.25fr;
         gap: 6px;
       }
 
@@ -1476,10 +1567,11 @@
     <section id="wheelZone" class="wheel-zone" aria-label="Roulette wheel and balance">
       <div class="topbar">
         <div>
-          <h1>Roulette MVP</h1>
-          <div class="sub">Browser first, Android-ready single file build</div>
+          <h1 id="appTitle">룰렛 MVP</h1>
+          <div id="appSub" class="sub">브라우저 먼저, 안드로이드 앱 전환 준비</div>
         </div>
-        <div class="mode" aria-label="Roulette mode">
+        <button id="settingsButton" class="settings-button" type="button">설정</button>
+        <div class="mode" aria-label="Roulette mode" hidden>
           <button id="europeanMode" class="active" type="button">EU</button>
           <button id="americanMode" type="button">US</button>
         </div>
@@ -1497,66 +1589,69 @@
 
       <div class="result-card">
         <div id="resultNumber" class="result-number">--</div>
-        <div id="resultMeta" class="result-meta">Place chips and spin</div>
+        <div id="resultMeta" class="result-meta">칩을 걸고 스핀하세요</div>
         <div class="bank">
           <div class="metric">
-            <span class="label">Balance</span>
+            <span id="balanceLabel" class="label">보유금</span>
             <span id="balance" class="value">5,000</span>
           </div>
           <div class="metric">
-            <span class="label">Total Bet</span>
+            <span id="totalBetLabel" class="label">총 배팅</span>
             <span id="totalBet" class="value">0</span>
           </div>
           <div class="metric">
-            <span class="label">Chip</span>
+            <span id="chipLabel" class="label">칩</span>
             <span id="selectedChip" class="value">100</span>
           </div>
         </div>
-        <button id="rechargeButton" class="recharge-button" type="button">Recharge +5K</button>
+        <button id="rechargeButton" class="recharge-button" type="button">충전 +5K</button>
         <div class="actions">
-          <button id="spinButton" class="primary" type="button">Spin</button>
-          <button id="undoBetButton" class="secondary" type="button">Undo Bet</button>
-          <button id="lastBetButton" class="secondary" type="button">Last Bet</button>
-          <button id="clearButton" class="secondary" type="button">Clear Bets</button>
+          <button id="spinButton" class="primary" type="button">스핀</button>
+          <button id="undoBetButton" class="secondary" type="button">배팅 취소</button>
+          <button id="lastBetButton" class="secondary" type="button">라스트 배팅</button>
+          <button id="clearButton" class="secondary" type="button">배팅 지우기</button>
         </div>
-        <button id="autoButton" class="auto-toggle" type="button">Auto Off</button>
-        <div id="roundTimer" class="round-timer">Manual Spin</div>
+        <button id="autoButton" class="auto-toggle" type="button" hidden>오토 OFF</button>
+        <div id="roundTimer" class="round-timer">수동 스핀</div>
         <div id="outcome" class="outcome" aria-live="polite"></div>
         <div id="status" class="status" role="status"></div>
       </div>
     </section>
 
     <section id="tableZone" class="table-zone" aria-label="Roulette betting table">
-      <div id="tableTitle" class="table-title">European Roulette</div>
+      <div id="tableTitle" class="table-title">유럽식 룰렛</div>
       <div class="mobile-hud" aria-label="Mobile roulette controls">
         <div class="quick-toggles">
           <div class="mode mobile-mode" aria-label="Mobile roulette mode">
             <button id="mobileEuropeanMode" class="active" type="button">EU</button>
             <button id="mobileAmericanMode" type="button">US</button>
           </div>
-          <button id="mobileAutoButton" class="auto-toggle" type="button">Auto Off</button>
+          <button id="mobileAutoButton" class="auto-toggle" type="button">오토 OFF</button>
         </div>
-        <div id="mobileRoundTimer" class="round-timer">Manual Spin</div>
+        <div class="mobile-settings-row">
+          <button id="mobileSettingsButton" class="settings-button" type="button">설정</button>
+          <div id="mobileRoundTimer" class="round-timer">수동 스핀</div>
+        </div>
         <div class="mobile-bank">
           <div class="metric">
-            <span class="label">Balance</span>
+            <span id="mobileBalanceLabel" class="label">보유금</span>
             <span id="mobileBalance" class="value">5,000</span>
           </div>
           <div class="metric">
-            <span class="label">Total Bet</span>
+            <span id="mobileTotalBetLabel" class="label">총 배팅</span>
             <span id="mobileTotalBet" class="value">0</span>
           </div>
           <div class="metric">
-            <span class="label">Chip</span>
+            <span id="mobileChipLabel" class="label">칩</span>
             <span id="mobileSelectedChip" class="value">100</span>
           </div>
         </div>
-        <button id="mobileRechargeButton" class="recharge-button" type="button">Recharge +5K</button>
+        <button id="mobileRechargeButton" class="recharge-button" type="button">충전 +5K</button>
         <div class="mobile-actions">
-          <button id="mobileSpinButton" class="primary" type="button">Spin</button>
-          <button id="mobileUndoBetButton" class="secondary" type="button">Undo Bet</button>
-          <button id="mobileLastBetButton" class="secondary" type="button">Last Bet</button>
-          <button id="mobileClearButton" class="secondary" type="button">Clear Bets</button>
+          <button id="mobileSpinButton" class="primary" type="button">스핀</button>
+          <button id="mobileUndoBetButton" class="secondary" type="button">배팅 취소</button>
+          <button id="mobileLastBetButton" class="secondary" type="button">라스트 배팅</button>
+          <button id="mobileClearButton" class="secondary" type="button">배팅 지우기</button>
         </div>
         <div id="mobileStatus" class="mobile-status"></div>
       </div>
@@ -1598,6 +1693,36 @@
     </section>
   </main>
 
+  <div id="settingsOverlay" class="settings-overlay" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <div class="settings-panel">
+      <div class="settings-head">
+        <div id="settingsTitle">설정</div>
+        <button id="settingsClose" class="settings-close" type="button" aria-label="Close">×</button>
+      </div>
+      <div class="settings-group">
+        <div id="languageLabel" class="settings-label">언어</div>
+        <div class="segmented">
+          <button id="langKoButton" class="active" type="button">한국어</button>
+          <button id="langEnButton" type="button">English</button>
+        </div>
+      </div>
+      <div class="settings-group">
+        <div id="modeLabel" class="settings-label">룰렛 타입</div>
+        <div class="segmented">
+          <button id="settingsEuropeanMode" class="active" type="button">EU</button>
+          <button id="settingsAmericanMode" type="button">US</button>
+        </div>
+      </div>
+      <div class="settings-group">
+        <div id="autoLabel" class="settings-label">오토 스핀</div>
+        <div class="segmented">
+          <button id="settingsAutoOff" class="active" type="button">OFF</button>
+          <button id="settingsAutoOn" type="button">ON</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     const europeanOrder = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
     const americanOrder = [0, 28, 9, 26, 30, 11, 7, 20, 32, 17, 5, 22, 34, 15, 3, 24, 36, 13, 1, "00", 27, 10, 25, 29, 12, 8, 19, 31, 18, 6, 21, 33, 16, 4, 23, 35, 14, 2];
@@ -1623,8 +1748,134 @@
       dozen: 2,
       row: 2
     };
+    const text = {
+      ko: {
+        appTitle: "룰렛 MVP",
+        appSub: "브라우저 먼저, 안드로이드 앱 전환 준비",
+        settings: "설정",
+        language: "언어",
+        mode: "룰렛 타입",
+        autoSpin: "오토 스핀",
+        tableEuropean: "유럽식 룰렛",
+        tableAmerican: "미국식 룰렛",
+        placeChips: "칩을 걸고 스핀하세요",
+        balance: "보유금",
+        totalBet: "총 배팅",
+        chip: "칩",
+        recharge: "충전 +5K",
+        spin: "스핀",
+        undo: "배팅 취소",
+        lastBet: "라스트 배팅",
+        clear: "배팅 지우기",
+        autoOn: "오토 ON",
+        autoOff: "오토 OFF",
+        manual: "수동 스핀",
+        bettingOpen: "배팅 가능",
+        noMoreBets: "배팅 마감",
+        wheelSpinning: "룰렛 회전 중",
+        nextRound: "다음 라운드",
+        autoStop: "이번 스핀 후 오토를 멈춥니다.",
+        manualMode: "수동 스핀 모드입니다.",
+        bettingIsOpen: "배팅이 열렸습니다.",
+        bettingClosed: "배팅이 마감되었습니다.",
+        noBetSpin: "먼저 배팅을 걸어주세요.",
+        noMoney: "선택한 칩을 걸 보유금이 부족합니다.",
+        noUndo: "취소할 배팅이 없습니다.",
+        noLast: "이전 배팅이 없습니다.",
+        noClear: "지울 배팅이 없습니다.",
+        refunded: "환불",
+        rechargeStatus: "테스트 충전",
+        ballMotion: "공이 움직이는 중",
+        noBetsResult: "배팅 없음. 결과",
+        won: "획득",
+        fromBet: "총 배팅",
+        noWinLost: "미당첨. 손실",
+        hit: "적중",
+        payout: "지급",
+        net: "순익",
+        miss: "미스",
+        lost: "손실",
+        americanMeta: "미국식 테이블은 00을 포함합니다",
+        europeanMeta: "유럽식 테이블은 0 하나만 사용합니다",
+        need: "필요",
+        forLastBet: "라스트 배팅에 필요합니다",
+        restored: "라스트 배팅 복원",
+        bet: "배팅",
+        undid: "취소"
+      },
+      en: {
+        appTitle: "Roulette MVP",
+        appSub: "Browser first, Android-ready single file build",
+        settings: "Settings",
+        language: "Language",
+        mode: "Roulette Type",
+        autoSpin: "Auto Spin",
+        tableEuropean: "European Roulette",
+        tableAmerican: "American Roulette",
+        placeChips: "Place chips and spin",
+        balance: "Balance",
+        totalBet: "Total Bet",
+        chip: "Chip",
+        recharge: "Recharge +5K",
+        spin: "Spin",
+        undo: "Undo Bet",
+        lastBet: "Last Bet",
+        clear: "Clear Bets",
+        autoOn: "Auto On",
+        autoOff: "Auto Off",
+        manual: "Manual Spin",
+        bettingOpen: "Betting Open",
+        noMoreBets: "No More Bets",
+        wheelSpinning: "Wheel Spinning",
+        nextRound: "Next Round",
+        autoStop: "Auto will stop after this spin.",
+        manualMode: "Manual spin mode.",
+        bettingIsOpen: "Betting is open.",
+        bettingClosed: "Betting is closed.",
+        noBetSpin: "Place at least one bet.",
+        noMoney: "Not enough balance for this chip.",
+        noUndo: "No bet to undo.",
+        noLast: "No previous bet yet.",
+        noClear: "No bets to clear.",
+        refunded: "Refunded",
+        rechargeStatus: "Test recharge",
+        ballMotion: "Ball in motion",
+        noBetsResult: "No bets. Result",
+        won: "Won",
+        fromBet: "from",
+        noWinLost: "No win. Lost",
+        hit: "Hit",
+        payout: "Payout",
+        net: "Net",
+        miss: "Miss",
+        lost: "Lost",
+        americanMeta: "American table includes 00",
+        europeanMeta: "European table uses single zero",
+        need: "Need",
+        forLastBet: "for Last Bet.",
+        restored: "Last Bet restored",
+        bet: "Bet",
+        undid: "Undid"
+      }
+    };
 
     const els = {
+      appTitle: document.getElementById("appTitle"),
+      appSub: document.getElementById("appSub"),
+      settingsButton: document.getElementById("settingsButton"),
+      mobileSettingsButton: document.getElementById("mobileSettingsButton"),
+      settingsOverlay: document.getElementById("settingsOverlay"),
+      settingsTitle: document.getElementById("settingsTitle"),
+      settingsClose: document.getElementById("settingsClose"),
+      languageLabel: document.getElementById("languageLabel"),
+      modeLabel: document.getElementById("modeLabel"),
+      autoLabel: document.getElementById("autoLabel"),
+      langKoButton: document.getElementById("langKoButton"),
+      langEnButton: document.getElementById("langEnButton"),
+      settingsEuropeanMode: document.getElementById("settingsEuropeanMode"),
+      settingsAmericanMode: document.getElementById("settingsAmericanMode"),
+      settingsAutoOff: document.getElementById("settingsAutoOff"),
+      settingsAutoOn: document.getElementById("settingsAutoOn"),
       wheel: document.getElementById("wheel"),
       wheelFace: document.getElementById("wheelFace"),
       wheelWrap: document.getElementById("wheelWrap"),
@@ -1637,6 +1888,12 @@
       mobileAmericanMode: document.getElementById("mobileAmericanMode"),
       resultNumber: document.getElementById("resultNumber"),
       resultMeta: document.getElementById("resultMeta"),
+      balanceLabel: document.getElementById("balanceLabel"),
+      totalBetLabel: document.getElementById("totalBetLabel"),
+      chipLabel: document.getElementById("chipLabel"),
+      mobileBalanceLabel: document.getElementById("mobileBalanceLabel"),
+      mobileTotalBetLabel: document.getElementById("mobileTotalBetLabel"),
+      mobileChipLabel: document.getElementById("mobileChipLabel"),
       balance: document.getElementById("balance"),
       totalBet: document.getElementById("totalBet"),
       selectedChip: document.getElementById("selectedChip"),
@@ -1670,6 +1927,7 @@
     };
 
     const state = {
+      lang: localStorage.getItem("roulette.lang") || "ko",
       mode: "european",
       balance: Number(localStorage.getItem("roulette.balance")) || 5000,
       selectedChip: 100,
@@ -1689,6 +1947,10 @@
       roundTimeoutId: null
     };
 
+    function t(key) {
+      return (text[state.lang] && text[state.lang][key]) || text.ko[key] || key;
+    }
+
     function formatMoney(value) {
       return value.toLocaleString("en-US");
     }
@@ -1696,6 +1958,64 @@
     function setStatus(text) {
       els.status.textContent = text;
       els.mobileStatus.textContent = text;
+    }
+
+    function setLanguage(lang) {
+      state.lang = lang;
+      localStorage.setItem("roulette.lang", lang);
+      document.documentElement.lang = lang;
+      applyLanguage();
+      render();
+    }
+
+    function applyLanguage() {
+      els.appTitle.textContent = t("appTitle");
+      els.appSub.textContent = t("appSub");
+      els.settingsButton.textContent = t("settings");
+      els.mobileSettingsButton.textContent = t("settings");
+      els.settingsTitle.textContent = t("settings");
+      els.languageLabel.textContent = t("language");
+      els.modeLabel.textContent = t("mode");
+      els.autoLabel.textContent = t("autoSpin");
+      els.balanceLabel.textContent = t("balance");
+      els.totalBetLabel.textContent = t("totalBet");
+      els.chipLabel.textContent = t("chip");
+      els.mobileBalanceLabel.textContent = t("balance");
+      els.mobileTotalBetLabel.textContent = t("totalBet");
+      els.mobileChipLabel.textContent = t("chip");
+      els.rechargeButton.textContent = t("recharge");
+      els.mobileRechargeButton.textContent = t("recharge");
+      els.spinButton.textContent = t("spin");
+      els.mobileSpinButton.textContent = t("spin");
+      els.undoBetButton.textContent = t("undo");
+      els.mobileUndoBetButton.textContent = t("undo");
+      els.lastBetButton.textContent = t("lastBet");
+      els.mobileLastBetButton.textContent = t("lastBet");
+      els.clearButton.textContent = t("clear");
+      els.mobileClearButton.textContent = t("clear");
+      els.tableTitle.textContent = state.mode === "american" ? t("tableAmerican") : t("tableEuropean");
+      els.langKoButton.classList.toggle("active", state.lang === "ko");
+      els.langEnButton.classList.toggle("active", state.lang === "en");
+      if (!state.lastResult && !state.spinning) {
+        els.resultMeta.textContent = state.mode === "american" ? t("americanMeta") : t("europeanMeta");
+      }
+      renderRoundTimer();
+      renderSettingsState();
+    }
+
+    function openSettings() {
+      els.settingsOverlay.classList.add("open");
+    }
+
+    function closeSettings() {
+      els.settingsOverlay.classList.remove("open");
+    }
+
+    function renderSettingsState() {
+      els.settingsEuropeanMode.classList.toggle("active", state.mode === "european");
+      els.settingsAmericanMode.classList.toggle("active", state.mode === "american");
+      els.settingsAutoOn.classList.toggle("active", state.autoMode);
+      els.settingsAutoOff.classList.toggle("active", !state.autoMode);
     }
 
     function getOrder() {
@@ -1924,7 +2244,7 @@
       if (state.spinning && !enabled) {
         state.autoMode = false;
         clearRoundTimers();
-        setStatus("Auto will stop after this spin.");
+        setStatus(t("autoStop"));
         render();
         return;
       }
@@ -1936,7 +2256,7 @@
       } else {
         state.roundPhase = "manual";
         state.countdown = 0;
-        setStatus("Manual spin mode.");
+        setStatus(t("manualMode"));
         render();
       }
     }
@@ -1946,7 +2266,8 @@
       clearRoundTimers();
       state.roundPhase = "betting";
       state.countdown = 25;
-      setStatus("Betting is open.");
+      closeMobileSpinLayer();
+      setStatus(t("bettingIsOpen"));
       render();
       state.roundTimerId = window.setInterval(() => {
         state.countdown -= 1;
@@ -1960,7 +2281,7 @@
       clearRoundTimers();
       state.roundPhase = "closed";
       state.countdown = 5;
-      setStatus("No more bets.");
+      setStatus(t("noMoreBets"));
       render();
       state.roundTimerId = window.setInterval(() => {
         state.countdown -= 1;
@@ -1985,12 +2306,12 @@
     }
 
     function renderRoundTimer() {
-      let text = "Manual Spin";
+      let text = t("manual");
       let phase = state.roundPhase;
-      if (state.autoMode && phase === "betting") text = `Betting Open ${state.countdown}s`;
-      if (state.autoMode && phase === "closed") text = `No More Bets ${state.countdown}s`;
-      if (state.autoMode && phase === "spinning") text = "Wheel Spinning";
-      if (state.autoMode && phase === "result") text = `Next Round ${state.countdown}s`;
+      if (state.autoMode && phase === "betting") text = `${t("bettingOpen")} ${state.countdown}s`;
+      if (state.autoMode && phase === "closed") text = `${t("noMoreBets")} ${state.countdown}s`;
+      if (state.autoMode && phase === "spinning") text = t("wheelSpinning");
+      if (state.autoMode && phase === "result") text = `${t("nextRound")} ${state.countdown}s`;
       const urgent = state.autoMode && ((phase === "betting" && state.countdown <= 5) || phase === "closed");
       const className = `round-timer ${phase}${urgent ? " urgent" : ""}`;
       els.roundTimer.textContent = text;
@@ -2001,30 +2322,30 @@
 
     function placeBet(key) {
       if (isBettingLocked()) {
-        setStatus("Betting is closed.");
+        setStatus(t("bettingClosed"));
         return;
       }
       hideOutcome();
       if (state.balance < state.selectedChip) {
-        setStatus("Not enough balance for this chip.");
+        setStatus(t("noMoney"));
         return;
       }
       state.balance -= state.selectedChip;
       state.bets.set(key, (state.bets.get(key) || 0) + state.selectedChip);
       state.betStack.push({ key, amount: state.selectedChip });
-      setStatus(`Bet ${formatBetLabel(key)} +${formatMoney(state.selectedChip)}`);
+      setStatus(`${t("bet")} ${formatBetLabel(key)} +${formatMoney(state.selectedChip)}`);
       saveBalance();
       render();
     }
 
     function undoBet() {
       if (isBettingLocked()) {
-        setStatus("Betting is closed.");
+        setStatus(t("bettingClosed"));
         return;
       }
       const last = state.betStack.pop();
       if (!last) {
-        setStatus("No bet to undo.");
+        setStatus(t("noUndo"));
         return;
       }
       const current = state.bets.get(last.key) || 0;
@@ -2033,23 +2354,23 @@
       else state.bets.set(last.key, next);
       state.balance += last.amount;
       hideOutcome();
-      setStatus(`Undid ${formatBetLabel(last.key)} -${formatMoney(last.amount)}.`);
+      setStatus(`${t("undid")} ${formatBetLabel(last.key)} -${formatMoney(last.amount)}.`);
       saveBalance();
       render();
     }
 
     function restoreLastBet() {
       if (isBettingLocked()) {
-        setStatus("Betting is closed.");
+        setStatus(t("bettingClosed"));
         return;
       }
       if (state.lastBets.size === 0) {
-        setStatus("No previous bet yet.");
+        setStatus(t("noLast"));
         return;
       }
       const required = Array.from(state.lastBets.values()).reduce((sum, amount) => sum + amount, 0);
       if (state.balance < required) {
-        setStatus(`Need ${formatMoney(required)} for Last Bet.`);
+        setStatus(`${t("need")} ${formatMoney(required)} ${t("forLastBet")}`);
         return;
       }
       hideOutcome();
@@ -2058,14 +2379,14 @@
       state.betStack = [];
       state.lastBets.forEach((amount, key) => state.bets.set(key, amount));
       state.lastBets.forEach((amount, key) => state.betStack.push({ key, amount }));
-      setStatus(`Last Bet restored: ${formatMoney(required)}.`);
+      setStatus(`${t("restored")}: ${formatMoney(required)}.`);
       saveBalance();
       render();
     }
 
     function clearBets() {
       if (isBettingLocked()) {
-        setStatus("Betting is closed.");
+        setStatus(t("bettingClosed"));
         return;
       }
       const refund = getTotalBet();
@@ -2073,7 +2394,7 @@
       state.bets.clear();
       state.betStack = [];
       hideOutcome();
-      setStatus(refund ? `Refunded ${formatMoney(refund)}.` : "No bets to clear.");
+      setStatus(refund ? `${t("refunded")} ${formatMoney(refund)}.` : t("noClear"));
       saveBalance();
       render();
     }
@@ -2082,7 +2403,7 @@
       const amount = 5000;
       state.balance += amount;
       saveBalance();
-      setStatus(`Test recharge +${formatMoney(amount)}.`);
+      setStatus(`${t("rechargeStatus")} +${formatMoney(amount)}.`);
       render();
     }
 
@@ -2103,7 +2424,7 @@
     function spin(options = {}) {
       if (state.spinning) return;
       if (!options.auto && state.bets.size === 0) {
-        setStatus("Place at least one bet.");
+        setStatus(t("noBetSpin"));
         return;
       }
 
@@ -2124,10 +2445,10 @@
       els.spinButton.disabled = true;
       els.undoBetButton.disabled = true;
       els.lastBetButton.disabled = true;
-      setStatus("Wheel spinning...");
+      setStatus(t("wheelSpinning"));
       els.resultNumber.textContent = "...";
       els.resultNumber.style.color = "var(--gold-light)";
-      els.resultMeta.textContent = "Ball in motion";
+      els.resultMeta.textContent = t("ballMotion");
       els.ball.classList.remove("clatter");
       els.wheelWrap.classList.remove("clatter");
       if (isMobileLayout()) void els.ball.offsetWidth;
@@ -2178,23 +2499,24 @@
       els.resultNumber.style.color = getColor(result) === "red" ? "#ff5d69" : getColor(result) === "black" ? "#f0f0f0" : "#5cffad";
       els.resultMeta.textContent = `${getColor(result).toUpperCase()} | ${result === 0 || result === "00" ? "ZERO" : Number(result) % 2 === 0 ? "EVEN" : "ODD"}`;
       if (totalBet === 0) {
-        setStatus(`No bets. Result ${result}.`);
+        setStatus(`${t("noBetsResult")} ${result}.`);
         state.bets.clear();
         els.spinButton.disabled = false;
         els.undoBetButton.disabled = false;
         els.lastBetButton.disabled = false;
         render();
+        closeMobileSpinLayer();
         scheduleNextAutoRound();
         return;
       }
 
       setStatus(win > 0
-        ? `Won ${formatMoney(win)} from ${formatMoney(totalBet)} total bet.`
-        : `No win. Lost ${formatMoney(totalBet)}.`);
+        ? `${t("won")} ${formatMoney(win)} ${t("fromBet")} ${formatMoney(totalBet)}.`
+        : `${t("noWinLost")} ${formatMoney(totalBet)}.`);
       showOutcome(win > 0
-        ? `Hit ${result} | Payout ${formatMoney(win)} | Net ${net >= 0 ? "+" : ""}${formatMoney(net)}`
-        : `Miss | Lost ${formatMoney(totalBet)}`, win > 0);
-      showRoundEffect(win > 0, result, win > 0 ? `Payout ${formatMoney(win)} | Net ${net >= 0 ? "+" : ""}${formatMoney(net)}` : `Lost ${formatMoney(totalBet)}`);
+        ? `${t("hit")} ${result} | ${t("payout")} ${formatMoney(win)} | ${t("net")} ${net >= 0 ? "+" : ""}${formatMoney(net)}`
+        : `${t("miss")} | ${t("lost")} ${formatMoney(totalBet)}`, win > 0);
+      showRoundEffect(win > 0, result, win > 0 ? `${t("payout")} ${formatMoney(win)} | ${t("net")} ${net >= 0 ? "+" : ""}${formatMoney(net)}` : `${t("lost")} ${formatMoney(totalBet)}`);
       scheduleMobileSpinLayerClose();
       if (win > 0) {
         state.bets.clear();
@@ -2233,7 +2555,7 @@
 
       const banner = document.createElement("div");
       banner.className = `round-banner ${isWin ? "win" : "loss"}`;
-      banner.innerHTML = `${isWin ? "Hit" : "Miss"} ${result}<small>${detail}</small>`;
+      banner.innerHTML = `${isWin ? t("hit") : t("miss")} ${result}<small>${detail}</small>`;
       els.tableZone.appendChild(banner);
       window.setTimeout(() => banner.remove(), 1600);
       window.setTimeout(() => {
@@ -2301,13 +2623,14 @@
       els.mobileEuropeanMode.classList.toggle("active", mode === "european");
       els.mobileAmericanMode.classList.toggle("active", mode === "american");
       els.wheel.classList.toggle("american", mode === "american");
-      els.tableTitle.textContent = mode === "american" ? "American Roulette" : "European Roulette";
+      els.tableTitle.textContent = mode === "american" ? t("tableAmerican") : t("tableEuropean");
       els.resultNumber.textContent = "--";
       els.resultNumber.style.color = "var(--gold-light)";
-      els.resultMeta.textContent = mode === "american" ? "American table includes 00" : "European table uses single zero";
+      els.resultMeta.textContent = mode === "american" ? t("americanMeta") : t("europeanMeta");
       hideOutcome();
-      setStatus("Bets cleared after mode change.");
+      setStatus(state.lang === "ko" ? "룰렛 타입 변경으로 배팅을 정리했습니다." : "Bets cleared after mode change.");
       saveBalance();
+      renderSettingsState();
       render();
     }
 
@@ -2323,8 +2646,8 @@
       els.mobileTotalBet.textContent = formatMoney(getTotalBet());
       els.mobileSelectedChip.textContent = formatMoney(state.selectedChip);
       els.mobileStatus.textContent = els.status.textContent;
-      els.autoButton.textContent = state.autoMode ? "Auto On" : "Auto Off";
-      els.mobileAutoButton.textContent = state.autoMode ? "Auto On" : "Auto Off";
+      els.autoButton.textContent = state.autoMode ? t("autoOn") : t("autoOff");
+      els.mobileAutoButton.textContent = state.autoMode ? t("autoOn") : t("autoOff");
       els.autoButton.classList.toggle("active", state.autoMode);
       els.mobileAutoButton.classList.toggle("active", state.autoMode);
       els.spinButton.disabled = state.spinning || state.autoMode;
@@ -2335,6 +2658,9 @@
       els.mobileUndoBetButton.disabled = isBettingLocked() || state.betStack.length === 0;
       els.mobileLastBetButton.disabled = isBettingLocked() || state.lastBets.size === 0;
       els.mobileClearButton.disabled = isBettingLocked();
+      els.rechargeButton.disabled = state.spinning;
+      els.mobileRechargeButton.disabled = state.spinning;
+      renderSettingsState();
       renderRoundTimer();
       renderWheelFace();
       renderChips();
@@ -2362,8 +2688,21 @@
     els.americanMode.addEventListener("click", () => setMode("american"));
     els.mobileEuropeanMode.addEventListener("click", () => setMode("european"));
     els.mobileAmericanMode.addEventListener("click", () => setMode("american"));
+    els.settingsButton.addEventListener("click", openSettings);
+    els.mobileSettingsButton.addEventListener("click", openSettings);
+    els.settingsClose.addEventListener("click", closeSettings);
+    els.settingsOverlay.addEventListener("click", (event) => {
+      if (event.target === els.settingsOverlay) closeSettings();
+    });
+    els.langKoButton.addEventListener("click", () => setLanguage("ko"));
+    els.langEnButton.addEventListener("click", () => setLanguage("en"));
+    els.settingsEuropeanMode.addEventListener("click", () => setMode("european"));
+    els.settingsAmericanMode.addEventListener("click", () => setMode("american"));
+    els.settingsAutoOff.addEventListener("click", () => setAutoMode(false));
+    els.settingsAutoOn.addEventListener("click", () => setAutoMode(true));
     window.addEventListener("resize", () => renderTable());
 
+    applyLanguage();
     render();
   </script>
 </body>
