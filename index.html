@@ -1084,9 +1084,11 @@
 
     .history {
       display: flex;
+      flex-wrap: wrap;
       gap: 6px;
       overflow: hidden;
-      min-height: 34px;
+      max-height: 66px;
+      min-height: 64px;
       align-items: center;
       padding: 6px;
       background: rgba(0, 0, 0, 0.23);
@@ -1113,6 +1115,69 @@
     }
 
     .history .green {
+      background: #08763f;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .stats-panel {
+      border: 1px solid rgba(255, 211, 107, 0.22);
+      background: rgba(0, 0, 0, 0.19);
+      padding: 8px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .stats-title {
+      color: var(--gold-light);
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .stats-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .stats-table th,
+    .stats-table td {
+      padding: 5px 4px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      text-align: center;
+    }
+
+    .stats-table th {
+      color: rgba(245, 230, 189, 0.65);
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .stats-number {
+      display: inline-grid;
+      place-items: center;
+      min-width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      padding: 0 5px;
+      color: #fff;
+      font-weight: 900;
+    }
+
+    .stats-number.red {
+      background: var(--red);
+    }
+
+    .stats-number.black {
+      background: var(--black);
+    }
+
+    .stats-number.green {
       background: #08763f;
     }
 
@@ -1449,6 +1514,16 @@
         scroll-snap-align: start;
       }
 
+      .stats-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 6px;
+      }
+
+      .history {
+        max-height: 62px;
+        min-height: 62px;
+      }
+
       .numbers {
         grid-template-columns: repeat(3, 1fr);
         grid-template-rows: repeat(12, 1fr);
@@ -1710,6 +1785,32 @@
       </div>
 
       <div id="history" class="history" aria-label="Spin history"></div>
+      <div class="stats-grid" aria-label="Roulette statistics">
+        <div class="stats-panel">
+          <div id="hotStatsTitle" class="stats-title">최근 많이 나온 번호</div>
+          <table class="stats-table">
+            <thead>
+              <tr>
+                <th id="hotNumberHead">번호</th>
+                <th id="hotCountHead">횟수</th>
+              </tr>
+            </thead>
+            <tbody id="hotStats"></tbody>
+          </table>
+        </div>
+        <div class="stats-panel">
+          <div id="coldStatsTitle" class="stats-title">최근 안 나온 번호</div>
+          <table class="stats-table">
+            <thead>
+              <tr>
+                <th id="coldNumberHead">번호</th>
+                <th id="coldGapHead">간격</th>
+              </tr>
+            </thead>
+            <tbody id="coldStats"></tbody>
+          </table>
+        </div>
+      </div>
     </section>
   </main>
 
@@ -1833,6 +1934,11 @@
         autoBetWaiting: "라스트 배팅 저장 후 자동 배팅됩니다.",
         autoBetApplied: "오토 배팅 적용",
         autoBetNoFunds: "오토 배팅 잔액 부족으로 꺼졌습니다.",
+        hotStats: "최근 많이 나온 번호",
+        coldStats: "최근 안 나온 번호",
+        statNumber: "번호",
+        statCount: "횟수",
+        statGap: "간격",
         bet: "배팅",
         undid: "취소"
       },
@@ -1893,6 +1999,11 @@
         autoBetWaiting: "Auto Bet will start after a Last Bet is saved.",
         autoBetApplied: "Auto Bet applied",
         autoBetNoFunds: "Auto Bet stopped: not enough balance.",
+        hotStats: "Recent Hot Numbers",
+        coldStats: "Recent Cold Numbers",
+        statNumber: "No.",
+        statCount: "Hits",
+        statGap: "Gap",
         bet: "Bet",
         undid: "Undid"
       }
@@ -1965,7 +2076,15 @@
       zeroes: document.getElementById("zeroes"),
       numbers: document.getElementById("numbers"),
       hotspots: document.getElementById("hotspots"),
-      history: document.getElementById("history")
+      history: document.getElementById("history"),
+      hotStatsTitle: document.getElementById("hotStatsTitle"),
+      coldStatsTitle: document.getElementById("coldStatsTitle"),
+      hotNumberHead: document.getElementById("hotNumberHead"),
+      hotCountHead: document.getElementById("hotCountHead"),
+      coldNumberHead: document.getElementById("coldNumberHead"),
+      coldGapHead: document.getElementById("coldGapHead"),
+      hotStats: document.getElementById("hotStats"),
+      coldStats: document.getElementById("coldStats")
     };
 
     const state = {
@@ -2022,6 +2141,12 @@
       els.modeLabel.textContent = t("mode");
       els.autoLabel.textContent = t("autoSpin");
       els.autoBetLabel.textContent = t("autoBet");
+      els.hotStatsTitle.textContent = t("hotStats");
+      els.coldStatsTitle.textContent = t("coldStats");
+      els.hotNumberHead.textContent = t("statNumber");
+      els.hotCountHead.textContent = t("statCount");
+      els.coldNumberHead.textContent = t("statNumber");
+      els.coldGapHead.textContent = t("statGap");
       els.balanceLabel.textContent = t("balance");
       els.totalBetLabel.textContent = t("totalBet");
       els.chipLabel.textContent = t("chip");
@@ -2267,12 +2392,46 @@
 
     function renderHistory() {
       els.history.innerHTML = "";
-      state.history.slice(0, 18).forEach((result) => {
+      state.history.slice(0, 28).forEach((result) => {
         const item = document.createElement("span");
         item.className = getColor(result);
         item.textContent = result;
         els.history.appendChild(item);
       });
+      renderStats();
+    }
+
+    function renderStats() {
+      const order = getOrder();
+      const counts = new Map(order.map((number) => [number, 0]));
+      state.history.forEach((result) => counts.set(result, (counts.get(result) || 0) + 1));
+      const hot = [...counts.entries()]
+        .filter((entry) => entry[1] > 0)
+        .sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0]), "en", { numeric: true }))
+        .slice(0, 5);
+      const cold = order.map((number) => {
+        const gap = state.history.findIndex((result) => result === number);
+        return { number, gap: gap === -1 ? state.history.length + 1 : gap + 1 };
+      })
+        .sort((a, b) => b.gap - a.gap || String(a.number).localeCompare(String(b.number), "en", { numeric: true }))
+        .slice(0, 5);
+      els.hotStats.innerHTML = "";
+      els.coldStats.innerHTML = "";
+      hot.forEach(([number, count]) => els.hotStats.appendChild(createStatsRow(number, count)));
+      cold.forEach(({ number, gap }) => els.coldStats.appendChild(createStatsRow(number, gap)));
+    }
+
+    function createStatsRow(number, value) {
+      const row = document.createElement("tr");
+      const numberCell = document.createElement("td");
+      const valueCell = document.createElement("td");
+      const badge = document.createElement("span");
+      badge.className = `stats-number ${getColor(number)}`;
+      badge.textContent = number;
+      numberCell.appendChild(badge);
+      valueCell.textContent = value;
+      row.append(numberCell, valueCell);
+      return row;
     }
 
     function getTotalBet() {
@@ -2568,7 +2727,7 @@
       const net = win - totalBet;
       state.balance += win;
       state.history.unshift(result);
-      state.history = state.history.slice(0, 30);
+      state.history = state.history.slice(0, 60);
       state.lastResult = result;
       state.betStack = [];
       state.spinning = false;
