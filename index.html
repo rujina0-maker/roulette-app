@@ -1720,6 +1720,13 @@
           <button id="settingsAutoOn" type="button">ON</button>
         </div>
       </div>
+      <div class="settings-group">
+        <div id="autoBetLabel" class="settings-label">오토 배팅</div>
+        <div class="segmented">
+          <button id="settingsAutoBetOff" class="active" type="button">OFF</button>
+          <button id="settingsAutoBetOn" type="button">ON</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1756,6 +1763,7 @@
         language: "언어",
         mode: "룰렛 타입",
         autoSpin: "오토 스핀",
+        autoBet: "오토 배팅",
         tableEuropean: "유럽식 룰렛",
         tableAmerican: "미국식 룰렛",
         placeChips: "칩을 걸고 스핀하세요",
@@ -1769,6 +1777,8 @@
         clear: "배팅 지우기",
         autoOn: "오토 ON",
         autoOff: "오토 OFF",
+        autoBetOn: "오토 배팅 ON",
+        autoBetOff: "오토 배팅 OFF",
         manual: "수동 스핀",
         bettingOpen: "배팅 가능",
         noMoreBets: "배팅 마감",
@@ -1800,6 +1810,9 @@
         need: "필요",
         forLastBet: "라스트 배팅에 필요합니다",
         restored: "라스트 배팅 복원",
+        autoBetWaiting: "라스트 배팅 저장 후 자동 배팅됩니다.",
+        autoBetApplied: "오토 배팅 적용",
+        autoBetNoFunds: "오토 배팅 잔액 부족으로 꺼졌습니다.",
         bet: "배팅",
         undid: "취소"
       },
@@ -1810,6 +1823,7 @@
         language: "Language",
         mode: "Roulette Type",
         autoSpin: "Auto Spin",
+        autoBet: "Auto Bet",
         tableEuropean: "European Roulette",
         tableAmerican: "American Roulette",
         placeChips: "Place chips and spin",
@@ -1823,6 +1837,8 @@
         clear: "Clear Bets",
         autoOn: "Auto On",
         autoOff: "Auto Off",
+        autoBetOn: "Auto Bet On",
+        autoBetOff: "Auto Bet Off",
         manual: "Manual Spin",
         bettingOpen: "Betting Open",
         noMoreBets: "No More Bets",
@@ -1854,6 +1870,9 @@
         need: "Need",
         forLastBet: "for Last Bet.",
         restored: "Last Bet restored",
+        autoBetWaiting: "Auto Bet will start after a Last Bet is saved.",
+        autoBetApplied: "Auto Bet applied",
+        autoBetNoFunds: "Auto Bet stopped: not enough balance.",
         bet: "Bet",
         undid: "Undid"
       }
@@ -1870,12 +1889,15 @@
       languageLabel: document.getElementById("languageLabel"),
       modeLabel: document.getElementById("modeLabel"),
       autoLabel: document.getElementById("autoLabel"),
+      autoBetLabel: document.getElementById("autoBetLabel"),
       langKoButton: document.getElementById("langKoButton"),
       langEnButton: document.getElementById("langEnButton"),
       settingsEuropeanMode: document.getElementById("settingsEuropeanMode"),
       settingsAmericanMode: document.getElementById("settingsAmericanMode"),
       settingsAutoOff: document.getElementById("settingsAutoOff"),
       settingsAutoOn: document.getElementById("settingsAutoOn"),
+      settingsAutoBetOff: document.getElementById("settingsAutoBetOff"),
+      settingsAutoBetOn: document.getElementById("settingsAutoBetOn"),
       wheel: document.getElementById("wheel"),
       wheelFace: document.getElementById("wheelFace"),
       wheelWrap: document.getElementById("wheelWrap"),
@@ -1941,6 +1963,7 @@
       spinning: false,
       mobileLayerTimer: null,
       autoMode: false,
+      autoBetMode: false,
       roundPhase: "manual",
       countdown: 0,
       roundTimerId: null,
@@ -1977,6 +2000,7 @@
       els.languageLabel.textContent = t("language");
       els.modeLabel.textContent = t("mode");
       els.autoLabel.textContent = t("autoSpin");
+      els.autoBetLabel.textContent = t("autoBet");
       els.balanceLabel.textContent = t("balance");
       els.totalBetLabel.textContent = t("totalBet");
       els.chipLabel.textContent = t("chip");
@@ -2016,6 +2040,8 @@
       els.settingsAmericanMode.classList.toggle("active", state.mode === "american");
       els.settingsAutoOn.classList.toggle("active", state.autoMode);
       els.settingsAutoOff.classList.toggle("active", !state.autoMode);
+      els.settingsAutoBetOn.classList.toggle("active", state.autoBetMode);
+      els.settingsAutoBetOff.classList.toggle("active", !state.autoBetMode);
     }
 
     function getOrder() {
@@ -2269,6 +2295,7 @@
       closeMobileSpinLayer();
       setStatus(t("bettingIsOpen"));
       render();
+      applyAutoBet();
       state.roundTimerId = window.setInterval(() => {
         state.countdown -= 1;
         renderRoundTimer();
@@ -2382,6 +2409,38 @@
       setStatus(`${t("restored")}: ${formatMoney(required)}.`);
       saveBalance();
       render();
+    }
+
+    function setAutoBetMode(enabled) {
+      state.autoBetMode = enabled;
+      if (enabled && state.lastBets.size === 0) setStatus(t("autoBetWaiting"));
+      if (enabled && state.autoMode && state.roundPhase === "betting" && state.bets.size === 0) applyAutoBet();
+      render();
+    }
+
+    function applyAutoBet() {
+      if (!state.autoBetMode || state.bets.size > 0) return false;
+      if (state.lastBets.size === 0) {
+        setStatus(t("autoBetWaiting"));
+        renderSettingsState();
+        return false;
+      }
+      const required = Array.from(state.lastBets.values()).reduce((sum, amount) => sum + amount, 0);
+      if (state.balance < required) {
+        state.autoBetMode = false;
+        setStatus(t("autoBetNoFunds"));
+        render();
+        return false;
+      }
+      state.balance -= required;
+      state.bets.clear();
+      state.betStack = [];
+      state.lastBets.forEach((amount, key) => state.bets.set(key, amount));
+      state.lastBets.forEach((amount, key) => state.betStack.push({ key, amount }));
+      setStatus(`${t("autoBetApplied")}: ${formatMoney(required)}.`);
+      saveBalance();
+      render();
+      return true;
     }
 
     function clearBets() {
@@ -2613,6 +2672,7 @@
     function setMode(mode) {
       if (state.spinning || state.mode === mode) return;
       if (state.autoMode) setAutoMode(false);
+      state.autoBetMode = false;
       state.balance += getTotalBet();
       state.bets.clear();
       state.betStack = [];
@@ -2700,6 +2760,8 @@
     els.settingsAmericanMode.addEventListener("click", () => setMode("american"));
     els.settingsAutoOff.addEventListener("click", () => setAutoMode(false));
     els.settingsAutoOn.addEventListener("click", () => setAutoMode(true));
+    els.settingsAutoBetOff.addEventListener("click", () => setAutoBetMode(false));
+    els.settingsAutoBetOn.addEventListener("click", () => setAutoBetMode(true));
     window.addEventListener("resize", () => renderTable());
 
     applyLanguage();
