@@ -109,6 +109,26 @@
       color: #1a1107;
     }
 
+    .quick-toggles {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .auto-toggle {
+      border: 1px solid rgba(255, 211, 107, 0.44);
+      background: rgba(255, 255, 255, 0.07);
+      color: var(--cream);
+      cursor: pointer;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .auto-toggle.active {
+      background: var(--gold);
+      color: #1a1107;
+    }
+
     .wheel-wrap {
       position: relative;
       display: grid;
@@ -1165,10 +1185,24 @@
 
       .mobile-hud {
         display: grid;
-        gap: 8px;
-        padding: 8px;
+        gap: 6px;
+        padding: 7px;
         border: 1px solid rgba(255, 211, 107, 0.22);
         background: rgba(0, 0, 0, 0.18);
+      }
+
+      .quick-toggles {
+        grid-template-columns: 2fr 1fr;
+        gap: 6px;
+      }
+
+      .mobile-mode {
+        min-width: 0;
+      }
+
+      .auto-toggle {
+        min-height: 32px;
+        font-size: 12px;
       }
 
       .mobile-bank {
@@ -1185,6 +1219,11 @@
 
       .mobile-actions .primary {
         grid-column: 1 / -1;
+      }
+
+      .mobile-actions .secondary {
+        min-height: 38px;
+        font-size: 12px;
       }
 
       .mobile-status {
@@ -1399,11 +1438,11 @@
         </div>
         <div class="actions">
           <button id="spinButton" class="primary" type="button">Spin</button>
-          <button id="autoButton" class="secondary" type="button">Auto: Off</button>
           <button id="undoBetButton" class="secondary" type="button">Undo Bet</button>
           <button id="lastBetButton" class="secondary" type="button">Last Bet</button>
           <button id="clearButton" class="secondary" type="button">Clear Bets</button>
         </div>
+        <button id="autoButton" class="auto-toggle" type="button">Auto Off</button>
         <div id="roundTimer" class="round-timer">Manual Spin</div>
         <div id="outcome" class="outcome" aria-live="polite"></div>
         <div id="status" class="status" role="status"></div>
@@ -1413,9 +1452,12 @@
     <section id="tableZone" class="table-zone" aria-label="Roulette betting table">
       <div id="tableTitle" class="table-title">European Roulette</div>
       <div class="mobile-hud" aria-label="Mobile roulette controls">
-        <div class="mode mobile-mode" aria-label="Mobile roulette mode">
-          <button id="mobileEuropeanMode" class="active" type="button">EU</button>
-          <button id="mobileAmericanMode" type="button">US</button>
+        <div class="quick-toggles">
+          <div class="mode mobile-mode" aria-label="Mobile roulette mode">
+            <button id="mobileEuropeanMode" class="active" type="button">EU</button>
+            <button id="mobileAmericanMode" type="button">US</button>
+          </div>
+          <button id="mobileAutoButton" class="auto-toggle" type="button">Auto Off</button>
         </div>
         <div class="mobile-bank">
           <div class="metric">
@@ -1433,7 +1475,6 @@
         </div>
         <div class="mobile-actions">
           <button id="mobileSpinButton" class="primary" type="button">Spin</button>
-          <button id="mobileAutoButton" class="secondary" type="button">Auto: Off</button>
           <button id="mobileUndoBetButton" class="secondary" type="button">Undo Bet</button>
           <button id="mobileLastBetButton" class="secondary" type="button">Last Bet</button>
           <button id="mobileClearButton" class="secondary" type="button">Clear Bets</button>
@@ -2184,8 +2225,10 @@
       els.mobileTotalBet.textContent = formatMoney(getTotalBet());
       els.mobileSelectedChip.textContent = formatMoney(state.selectedChip);
       els.mobileStatus.textContent = els.status.textContent;
-      els.autoButton.textContent = state.autoMode ? "Auto: On" : "Auto: Off";
-      els.mobileAutoButton.textContent = state.autoMode ? "Auto: On" : "Auto: Off";
+      els.autoButton.textContent = state.autoMode ? "Auto On" : "Auto Off";
+      els.mobileAutoButton.textContent = state.autoMode ? "Auto On" : "Auto Off";
+      els.autoButton.classList.toggle("active", state.autoMode);
+      els.mobileAutoButton.classList.toggle("active", state.autoMode);
       els.spinButton.disabled = state.spinning || state.autoMode;
       els.mobileSpinButton.disabled = state.spinning || state.autoMode;
       els.undoBetButton.disabled = isBettingLocked() || state.betStack.length === 0;
