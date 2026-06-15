@@ -1,0 +1,8 @@
+outputs/
+work/
+work/*.png
+work/*.jpg
+work/*.jpeg
+work/*.webp
+work/*.mp4
+work/*.log

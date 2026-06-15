@@ -1,0 +1,2067 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Roulette Casino MVP</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --felt: #0d5a36;
+      --felt-dark: #073722;
+      --gold: #d9a441;
+      --gold-light: #ffd36b;
+      --red: #b61f2d;
+      --black: #171717;
+      --cream: #f5e6bd;
+      --ink: #130c08;
+      --line: rgba(255, 255, 255, 0.45);
+      --panel: rgba(13, 17, 18, 0.72);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(255, 211, 107, 0.18), transparent 34rem),
+        linear-gradient(135deg, #111 0%, #2b0f11 36%, #071f18 100%);
+      color: var(--cream);
+    }
+
+    button {
+      font: inherit;
+      color: inherit;
+    }
+
+    .app {
+      width: min(1180px, 100%);
+      margin: 0 auto;
+      padding: 14px;
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 14px;
+      min-height: 100vh;
+    }
+
+    .wheel-zone,
+    .table-zone {
+      border: 1px solid rgba(255, 211, 107, 0.28);
+      background: var(--panel);
+      box-shadow: 0 22px 60px rgba(0, 0, 0, 0.34);
+    }
+
+    .wheel-zone {
+      position: relative;
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 14px;
+      padding: 16px;
+      min-height: 620px;
+    }
+
+    .topbar {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: start;
+      gap: 10px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 26px;
+      line-height: 1.05;
+      color: var(--gold-light);
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+
+    .sub {
+      margin-top: 4px;
+      color: rgba(245, 230, 189, 0.75);
+      font-size: 12px;
+    }
+
+    .mode {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border: 1px solid rgba(255, 211, 107, 0.35);
+      overflow: hidden;
+      min-width: 148px;
+    }
+
+    .mode button {
+      border: 0;
+      background: rgba(255, 255, 255, 0.07);
+      padding: 9px 10px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 12px;
+    }
+
+    .mode button.active {
+      background: var(--gold);
+      color: #1a1107;
+    }
+
+    .wheel-wrap {
+      position: relative;
+      display: grid;
+      place-items: center;
+      min-height: 310px;
+      --ball-radius: -126px;
+      --tag-radius: -150px;
+    }
+
+    .pointer {
+      position: absolute;
+      top: 3px;
+      width: 0;
+      height: 0;
+      border-left: 16px solid transparent;
+      border-right: 16px solid transparent;
+      border-top: 34px solid var(--gold-light);
+      filter: drop-shadow(0 5px 8px rgba(0, 0, 0, 0.65));
+      z-index: 4;
+    }
+
+    .wheel {
+      width: min(310px, 84vw);
+      aspect-ratio: 1;
+      border-radius: 50%;
+      position: relative;
+      display: grid;
+      place-items: center;
+      border: 0;
+      box-shadow:
+        0 20px 38px rgba(0, 0, 0, 0.55);
+      transition: transform 4.2s cubic-bezier(.11, .75, .08, 1);
+      background: transparent;
+    }
+
+    .wheel.american {
+      background: transparent;
+    }
+
+    .wheel img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: none;
+    }
+
+    .wheel-face {
+      position: absolute;
+      inset: 2%;
+      border-radius: 50%;
+      border: 14px solid #4a250d;
+      background: #111;
+      box-shadow:
+        0 0 0 5px #9f641e,
+        0 0 0 9px #2d1508,
+        inset 0 0 0 5px #d1a044,
+        inset 0 0 32px rgba(0, 0, 0, 0.82);
+      overflow: hidden;
+      display: block;
+    }
+
+    .wheel-face::before {
+      content: "";
+      position: absolute;
+      inset: 28%;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 38% 34%, #ffe7a3, #bf8022 42%, #4f240b 100%);
+      border: 5px solid #2f1608;
+      z-index: 2;
+      box-shadow:
+        0 0 0 3px rgba(255, 211, 107, 0.42),
+        0 0 18px rgba(0, 0, 0, 0.65);
+    }
+
+    .wheel-face::after {
+      content: "";
+      position: absolute;
+      inset: 8%;
+      border-radius: 50%;
+      border: 3px solid rgba(255, 211, 107, 0.8);
+      box-shadow:
+        inset 0 0 0 34px rgba(78, 34, 12, 0.58),
+        inset 0 0 0 37px rgba(255, 211, 107, 0.28);
+      z-index: 1;
+    }
+
+    .pocket-label {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 18px;
+      height: 14px;
+      margin-left: -9px;
+      margin-top: -7px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-weight: 900;
+      font-size: 10px;
+      line-height: 1;
+      transform: rotate(var(--angle)) translateY(-111px) rotate(90deg);
+      z-index: 3;
+      text-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.95),
+        0 -1px 2px rgba(0, 0, 0, 0.7),
+        1px 0 2px rgba(0, 0, 0, 0.75);
+      background: transparent;
+      border: 0;
+    }
+
+    .pocket-label.red {
+      background: transparent;
+    }
+
+    .pocket-label.black {
+      background: transparent;
+    }
+
+    .pocket-label.green {
+      background: transparent;
+      color: #f1fff2;
+    }
+
+    .wheel::before {
+      content: "";
+      position: absolute;
+      inset: 17%;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 211, 107, 0.48);
+      box-shadow: inset 0 0 26px rgba(0, 0, 0, 0.75);
+      display: none;
+    }
+
+    .wheel::after {
+      content: "";
+      width: 86px;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #ffe7a3, #be8124 52%, #4d2609 100%);
+      border: 5px solid #2a1508;
+      box-shadow: 0 0 18px rgba(0, 0, 0, 0.65);
+      z-index: 2;
+      display: none;
+    }
+
+    .ball {
+      position: absolute;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #fff, #d9d9d9 60%, #777);
+      top: calc(50% - 7px);
+      left: calc(50% - 7px);
+      transform: rotate(0deg) translateY(var(--ball-radius));
+      transform-origin: 7px 7px;
+      transition: transform 4.2s cubic-bezier(.16, .8, .1, 1);
+      z-index: 3;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.8);
+    }
+
+    .ball-tag {
+      position: absolute;
+      top: calc(50% - 20px);
+      left: calc(50% - 20px);
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: radial-gradient(circle, #fff8c9, #d9a441);
+      border: 2px solid #fff3b0;
+      color: #201306;
+      font-weight: 900;
+      font-size: 14px;
+      transform: rotate(0deg) translateY(var(--tag-radius));
+      transform-origin: 20px 20px;
+      opacity: 0;
+      transition: transform 4.2s cubic-bezier(.16, .8, .1, 1), opacity 220ms ease;
+      z-index: 4;
+      box-shadow: 0 5px 14px rgba(0, 0, 0, 0.52);
+      pointer-events: none;
+    }
+
+    .ball-tag.show {
+      opacity: 1;
+    }
+
+    .result-card {
+      display: grid;
+      gap: 8px;
+      text-align: center;
+      padding: 13px;
+      background: rgba(0, 0, 0, 0.28);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .result-number {
+      font-size: 46px;
+      line-height: 1;
+      font-weight: 800;
+      color: var(--gold-light);
+    }
+
+    .result-meta,
+    .status {
+      min-height: 19px;
+      color: rgba(245, 230, 189, 0.82);
+      font-size: 14px;
+    }
+
+    .bank {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .metric {
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.24);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .label {
+      display: block;
+      color: rgba(245, 230, 189, 0.66);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+
+    .value {
+      display: block;
+      margin-top: 4px;
+      color: #fff2c9;
+      font-weight: 800;
+      font-size: 17px;
+      overflow-wrap: anywhere;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+
+    .actions .primary {
+      grid-column: 1 / -1;
+      min-height: 52px;
+      font-size: 18px;
+    }
+
+    .primary,
+    .secondary {
+      min-height: 46px;
+      border: 1px solid rgba(255, 211, 107, 0.48);
+      cursor: pointer;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .primary {
+      background: linear-gradient(#f7c45d, #b47718);
+      color: #1a1004;
+    }
+
+    .primary:disabled {
+      opacity: 0.45;
+      cursor: default;
+    }
+
+    .secondary {
+      background: rgba(255, 255, 255, 0.07);
+    }
+
+    .outcome {
+      min-height: 42px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(255, 211, 107, 0.26);
+      background: rgba(0, 0, 0, 0.22);
+      color: #fff2c9;
+      font-weight: 900;
+      text-transform: uppercase;
+      opacity: 0;
+      transform: translateY(5px);
+      transition: opacity 220ms ease, transform 220ms ease;
+    }
+
+    .outcome.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .outcome.win {
+      background: linear-gradient(135deg, rgba(18, 126, 65, 0.9), rgba(217, 164, 65, 0.8));
+      color: #fffbe8;
+      animation: popWin 900ms ease;
+    }
+
+    .outcome.loss {
+      background: linear-gradient(135deg, rgba(75, 21, 17, 0.95), rgba(18, 18, 18, 0.82));
+      color: #ffe6dc;
+      animation: lossShake 520ms ease;
+    }
+
+    .round-banner {
+      position: absolute;
+      left: 50%;
+      top: 40%;
+      transform: translate(-50%, -50%) scale(0.92);
+      z-index: 12;
+      min-width: min(420px, 80%);
+      padding: 18px 24px;
+      border: 2px solid rgba(255, 255, 255, 0.72);
+      text-align: center;
+      font-weight: 900;
+      font-size: clamp(24px, 4vw, 48px);
+      text-transform: uppercase;
+      text-shadow: 0 3px 8px rgba(0, 0, 0, 0.7);
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.44);
+      pointer-events: none;
+      opacity: 0;
+      animation: bannerPop 1500ms ease forwards;
+    }
+
+    .round-banner.win {
+      background: linear-gradient(135deg, rgba(10, 112, 56, 0.94), rgba(222, 167, 47, 0.94));
+      color: #fff7ca;
+    }
+
+    .round-banner.loss {
+      background: linear-gradient(135deg, rgba(151, 20, 29, 0.96), rgba(25, 14, 13, 0.94));
+      color: #ffe1d9;
+    }
+
+    .round-banner small {
+      display: block;
+      margin-top: 5px;
+      font-size: 15px;
+      color: rgba(255, 255, 255, 0.88);
+    }
+
+    .table-zone {
+      position: relative;
+      overflow: hidden;
+      padding: 14px;
+      display: grid;
+      grid-template-rows: auto auto auto auto auto auto;
+      align-content: start;
+      gap: 12px;
+      background:
+        radial-gradient(circle at 28% 14%, rgba(255, 221, 128, 0.12), transparent 17rem),
+        linear-gradient(135deg, rgba(18, 95, 43, 0.78), rgba(6, 41, 25, 0.92));
+    }
+
+    .mobile-hud {
+      display: none;
+    }
+
+    .table-zone.round-win::after,
+    .table-zone.round-loss::after,
+    .wheel-zone.round-win::after,
+    .wheel-zone.round-loss::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 8;
+    }
+
+    .table-zone.round-win::after,
+    .wheel-zone.round-win::after {
+      background: radial-gradient(circle at 52% 38%, rgba(255, 226, 115, 0.42), transparent 34rem);
+      animation: winFlash 980ms ease forwards;
+    }
+
+    .table-zone.round-loss::after,
+    .wheel-zone.round-loss::after {
+      background: radial-gradient(circle at 50% 45%, rgba(180, 24, 24, 0.34), transparent 31rem);
+      animation: lossFlash 760ms ease forwards;
+    }
+
+    .chips {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(56px, 1fr));
+      gap: 8px;
+    }
+
+    .chip {
+      --chip-main: #c82031;
+      --chip-dark: #791019;
+      --chip-accent: #ffffff;
+      position: relative;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      border: 0;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      background:
+        radial-gradient(circle at 34% 28%, rgba(255, 255, 255, 0.34), transparent 20%),
+        radial-gradient(circle, #fff 0 24%, transparent 25%),
+        conic-gradient(
+          var(--chip-accent) 0deg 12deg,
+          var(--chip-main) 12deg 34deg,
+          var(--chip-accent) 34deg 46deg,
+          var(--chip-main) 46deg 80deg,
+          var(--chip-accent) 80deg 92deg,
+          var(--chip-main) 92deg 126deg,
+          var(--chip-accent) 126deg 138deg,
+          var(--chip-main) 138deg 172deg,
+          var(--chip-accent) 172deg 184deg,
+          var(--chip-main) 184deg 218deg,
+          var(--chip-accent) 218deg 230deg,
+          var(--chip-main) 230deg 264deg,
+          var(--chip-accent) 264deg 276deg,
+          var(--chip-main) 276deg 310deg,
+          var(--chip-accent) 310deg 322deg,
+          var(--chip-main) 322deg 360deg
+        );
+      color: #111;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow:
+        inset 0 -6px 12px rgba(0, 0, 0, 0.25),
+        inset 0 3px 6px rgba(255, 255, 255, 0.32),
+        0 7px 14px rgba(0, 0, 0, 0.35);
+      overflow: hidden;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .chip::before {
+      content: "";
+      position: absolute;
+      inset: 12%;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 35% 30%, #ffffff, #f5f2e8 68%, #d8d3c4 100%);
+      border: 2px solid rgba(0, 0, 0, 0.15);
+      box-shadow:
+        inset 0 0 0 4px rgba(255, 255, 255, 0.52),
+        inset 0 -4px 8px rgba(0, 0, 0, 0.12);
+      z-index: 0;
+    }
+
+    .chip::after {
+      content: "";
+      position: absolute;
+      inset: 25%;
+      border-radius: 50%;
+      border: 1px dashed rgba(0, 0, 0, 0.18);
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .chip .chip-label {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      place-items: center;
+      min-width: 0;
+      width: 100%;
+      height: 100%;
+      padding-top: 1px;
+      font-size: clamp(12px, 1.6vw, 18px);
+      line-height: 1;
+      letter-spacing: 0;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.8);
+    }
+
+    .chip.active {
+      outline: 3px solid var(--gold-light);
+      outline-offset: 2px;
+      transform: translateY(-2px);
+      box-shadow:
+        inset 0 -6px 12px rgba(0, 0, 0, 0.25),
+        inset 0 3px 6px rgba(255, 255, 255, 0.32),
+        0 0 0 4px rgba(255, 211, 107, 0.18),
+        0 10px 18px rgba(0, 0, 0, 0.42);
+    }
+
+    .table-title {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 30px;
+      color: #251704;
+      background: linear-gradient(180deg, #ffe18a, #b87917);
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 900;
+      text-transform: uppercase;
+      width: min(260px, 100%);
+      margin: 0 auto;
+      box-shadow: 0 5px 14px rgba(0, 0, 0, 0.28);
+    }
+
+    .roulette-layout {
+      display: grid;
+      grid-template-columns: 74px minmax(520px, 1fr) 58px;
+      gap: 0;
+      align-items: stretch;
+      border: 2px solid rgba(255, 255, 255, 0.72);
+      background: rgba(11, 83, 43, 0.88);
+      box-shadow:
+        inset 0 0 0 1px rgba(255, 211, 107, 0.22),
+        0 12px 28px rgba(0, 0, 0, 0.28);
+    }
+
+    .zeroes {
+      display: grid;
+      grid-template-rows: 1fr;
+      border-right: 1px solid rgba(255, 255, 255, 0.72);
+    }
+
+    .zeroes.american {
+      grid-template-rows: 1fr 1fr;
+    }
+
+    .bet-cell {
+      min-height: 58px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.04);
+      cursor: pointer;
+      position: relative;
+      display: grid;
+      place-items: center;
+      color: white;
+      font-weight: 800;
+      user-select: none;
+      text-shadow: 0 2px 3px rgba(0, 0, 0, 0.72);
+    }
+
+    .bet-cell:hover,
+    .outside button:hover,
+    .chip:hover,
+    .secondary:hover {
+      filter: brightness(1.15);
+    }
+
+    .bet-cell.red {
+      background: linear-gradient(135deg, #d32938, #85111c);
+    }
+
+    .bet-cell.black {
+      background: linear-gradient(135deg, #262626, #050505);
+    }
+
+    .bet-cell.green {
+      background: linear-gradient(135deg, #0e9152, #07512f);
+    }
+
+    .bet-cell.winner {
+      outline: 3px solid var(--gold-light);
+      outline-offset: -4px;
+      box-shadow: inset 0 0 24px rgba(255, 211, 107, 0.72), 0 0 22px rgba(255, 211, 107, 0.58);
+      animation: winnerPulse 1400ms ease infinite;
+      z-index: 2;
+    }
+
+    .amount {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      transform: translate(-50%, -50%);
+      background:
+        radial-gradient(circle, #ffffff 0 38%, transparent 39%),
+        conic-gradient(#739a2d 0deg 34deg, #ffffff 34deg 68deg, #739a2d 68deg 102deg, #ffffff 102deg 136deg, #739a2d 136deg 170deg, #ffffff 170deg 204deg, #739a2d 204deg 238deg, #ffffff 238deg 272deg, #739a2d 272deg 306deg, #ffffff 306deg 340deg, #739a2d 340deg);
+      color: #1c260b;
+      font-size: 10px;
+      font-weight: 900;
+      border: 1px solid rgba(17, 30, 10, 0.7);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.55);
+      z-index: 5;
+      text-shadow: none;
+    }
+
+    .amount::before {
+      content: "";
+      position: absolute;
+      inset: 8px;
+      border-radius: 50%;
+      background: #fff;
+      border: 1px dotted rgba(0, 0, 0, 0.22);
+      z-index: -1;
+    }
+
+    .amount.sweep {
+      animation: sweepChip 560ms ease forwards;
+    }
+
+    .outside .amount,
+    .row-bets .amount {
+      left: auto;
+      top: auto;
+      right: 4px;
+      bottom: 4px;
+      width: 30px;
+      height: 30px;
+      transform: none;
+      font-size: 9px;
+    }
+
+    .numbers {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      gap: 0;
+      height: 100%;
+    }
+
+    .numbers-wrap {
+      position: relative;
+      min-height: 174px;
+    }
+
+    .row-bets {
+      display: grid;
+      grid-template-rows: repeat(3, 1fr);
+      border-left: 1px solid rgba(255, 255, 255, 0.72);
+    }
+
+    .row-bets button,
+    .outside button {
+      min-height: 44px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(0, 0, 0, 0.1)), rgba(15, 103, 51, 0.95);
+      cursor: pointer;
+      font-weight: 800;
+      position: relative;
+      text-shadow: 0 2px 3px rgba(0, 0, 0, 0.62);
+    }
+
+    .row-bets button {
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      min-height: 58px;
+      padding: 6px 2px;
+    }
+
+    .hotspots {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .bet-hotspot {
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.74);
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.12);
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+      pointer-events: auto;
+      opacity: 0;
+      z-index: 3;
+    }
+
+    .bet-hotspot:hover {
+      opacity: 0.58;
+      background: rgba(255, 255, 255, 0.16);
+      box-shadow: 0 0 0 3px rgba(255, 211, 107, 0.12), 0 4px 10px rgba(0, 0, 0, 0.35);
+    }
+
+    .bet-hotspot.has-bet {
+      opacity: 1;
+      background: radial-gradient(circle, #fff7ce 0 34%, #d9a441 35% 100%);
+      box-shadow: 0 0 0 3px rgba(255, 211, 107, 0.16), 0 4px 10px rgba(0, 0, 0, 0.45);
+    }
+
+    .bet-hotspot.split-x {
+      left: calc(var(--col) * 100% / 12);
+      top: calc((var(--row) - 0.5) * 100% / 3);
+    }
+
+    .bet-hotspot.split-y {
+      left: calc((var(--col) - 0.5) * 100% / 12);
+      top: calc(var(--row) * 100% / 3);
+    }
+
+    .bet-hotspot.corner {
+      left: calc(var(--col) * 100% / 12);
+      top: calc(var(--row) * 100% / 3);
+    }
+
+    .numbers.mobile-layout {
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(12, 1fr);
+    }
+
+    .hotspots.mobile-layout .bet-hotspot.split-x {
+      left: calc((3.5 - var(--row)) * 100% / 3);
+      top: calc(var(--col) * 100% / 12);
+    }
+
+    .hotspots.mobile-layout .bet-hotspot.split-y {
+      left: calc((3 - var(--row)) * 100% / 3);
+      top: calc((var(--col) - 0.5) * 100% / 12);
+    }
+
+    .hotspots.mobile-layout .bet-hotspot.corner {
+      left: calc((3 - var(--row)) * 100% / 3);
+      top: calc(var(--col) * 100% / 12);
+    }
+
+    .hotspots.mobile-layout .bet-hotspot.zero-split {
+      top: 0;
+    }
+
+    .hotspots.mobile-layout .bet-hotspot.zero-split[data-bet="split:0-3"] {
+      left: calc(5 * 100% / 6);
+    }
+
+    .hotspots.mobile-layout .bet-hotspot.zero-split[data-bet="split:0-2"] {
+      left: calc(3 * 100% / 6);
+    }
+
+    .hotspots.mobile-layout .bet-hotspot.zero-split[data-bet="split:0-1"] {
+      left: calc(1 * 100% / 6);
+    }
+
+    .hotspots.mobile-layout .bet-hotspot.zero-trio.bottom {
+      left: calc(1 * 100% / 3);
+      top: 0;
+    }
+
+    .hotspots.mobile-layout .bet-hotspot.zero-trio.top {
+      left: calc(2 * 100% / 3);
+      top: 0;
+    }
+
+    .bet-hotspot.zero-split,
+    .bet-hotspot.zero-trio {
+      left: 0;
+    }
+
+    .bet-hotspot.zero-split {
+      top: calc((var(--row) - 0.5) * 100% / 3);
+    }
+
+    .bet-hotspot.zero-trio.top {
+      top: calc(1 * 100% / 3);
+    }
+
+    .bet-hotspot.zero-trio.bottom {
+      top: calc(2 * 100% / 3);
+    }
+
+    .outside {
+      display: grid;
+      gap: 0;
+      border: 2px solid rgba(255, 255, 255, 0.72);
+      border-top: 0;
+    }
+
+    .outside-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0;
+    }
+
+    .outside-row.six {
+      grid-template-columns: repeat(6, 1fr);
+    }
+
+    .outside.top {
+      border-top: 2px solid rgba(255, 255, 255, 0.72);
+      border-bottom: 0;
+    }
+
+    .outside.bottom {
+      border-top: 0;
+    }
+
+    .color-diamond {
+      display: inline-block;
+      width: 28px;
+      height: 18px;
+      transform: rotate(45deg);
+      border: 2px solid rgba(255, 255, 255, 0.82);
+      vertical-align: middle;
+    }
+
+    .outside .red-button {
+      background: var(--red);
+    }
+
+    .outside .black-button {
+      background: var(--black);
+    }
+
+    .outside .red-button .color-diamond {
+      background: #e42a34;
+    }
+
+    .outside .black-button .color-diamond {
+      background: #202020;
+    }
+
+    .history {
+      display: flex;
+      gap: 6px;
+      overflow: hidden;
+      min-height: 34px;
+      align-items: center;
+      padding: 6px;
+      background: rgba(0, 0, 0, 0.23);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .history span {
+      display: grid;
+      place-items: center;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      font-size: 12px;
+      font-weight: 900;
+      flex: 0 0 auto;
+    }
+
+    .history .red {
+      background: var(--red);
+    }
+
+    .history .black {
+      background: var(--black);
+    }
+
+    .history .green {
+      background: #08763f;
+    }
+
+    @keyframes popWin {
+      0% { transform: scale(1); }
+      45% { transform: scale(1.08); }
+      100% { transform: scale(1); }
+    }
+
+    @keyframes winnerPulse {
+      0%, 100% {
+        transform: scale(1);
+        filter: brightness(1);
+      }
+      50% {
+        transform: scale(1.07);
+        filter: brightness(1.35);
+      }
+    }
+
+    @keyframes bannerPop {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.82);
+      }
+      16%, 78% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+      100% {
+        opacity: 0;
+        transform: translate(-50%, -58%) scale(0.96);
+      }
+    }
+
+    @keyframes winFlash {
+      0% { opacity: 0; }
+      20% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+
+    @keyframes lossFlash {
+      0% { opacity: 0; }
+      28% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+
+    @keyframes lossShake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-5px); }
+      45% { transform: translateX(5px); }
+      70% { transform: translateX(-3px); }
+    }
+
+    @keyframes sweepChip {
+      to {
+        transform: translate(210px, -85px) scale(0.2) rotate(60deg);
+        opacity: 0;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .wheel-zone {
+        min-height: auto;
+      }
+    }
+
+    @media (max-width: 620px) {
+      body {
+        overflow-x: hidden;
+      }
+
+      body.mobile-spin-open {
+        overflow: hidden;
+      }
+
+      .app {
+        padding: 6px;
+        gap: 8px;
+      }
+
+      .topbar {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+
+      .mode {
+        width: 100%;
+      }
+
+      .wheel-zone {
+        position: fixed;
+        inset: 0;
+        z-index: 40;
+        display: none;
+        align-content: center;
+        padding: 12px;
+        gap: 10px;
+        min-height: 100dvh;
+        overflow-y: auto;
+        background:
+          radial-gradient(circle at 50% 26%, rgba(217, 164, 65, 0.16), transparent 22rem),
+          rgba(8, 5, 5, 0.96);
+        border: 0;
+      }
+
+      body.mobile-spin-open .wheel-zone {
+        display: grid;
+      }
+
+      .wheel-zone .topbar {
+        display: none;
+      }
+
+      .wheel-wrap {
+        min-height: 318px;
+        --ball-radius: -118px;
+        --tag-radius: -140px;
+      }
+
+      .wheel {
+        width: min(318px, 88vw);
+      }
+
+      .pocket-label {
+        width: 18px;
+        height: 13px;
+        margin-left: -9px;
+        margin-top: -6.5px;
+        font-size: 8px;
+        transform: rotate(var(--angle)) translateY(-114px) rotate(90deg);
+      }
+
+      .ball-tag {
+        width: 34px;
+        height: 34px;
+        top: calc(50% - 17px);
+        left: calc(50% - 17px);
+        transform-origin: 17px 17px;
+      }
+
+      .result-card {
+        padding: 10px;
+      }
+
+      .wheel-zone .bank,
+      .wheel-zone .actions,
+      .wheel-zone .status {
+        display: none;
+      }
+
+      .result-number {
+        font-size: 38px;
+      }
+
+      .bank {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .metric {
+        padding: 8px 5px;
+      }
+
+      .value {
+        font-size: 15px;
+      }
+
+      .actions {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .actions .primary {
+        grid-column: 1 / -1;
+      }
+
+      .primary,
+      .secondary {
+        min-height: 42px;
+        font-size: 14px;
+      }
+
+      .outcome {
+        min-height: 36px;
+        font-size: 13px;
+      }
+
+      .mobile-hud {
+        display: grid;
+        gap: 8px;
+        padding: 8px;
+        border: 1px solid rgba(255, 211, 107, 0.22);
+        background: rgba(0, 0, 0, 0.18);
+      }
+
+      .mobile-bank {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
+      }
+
+      .mobile-actions {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 6px;
+      }
+
+      .mobile-actions .primary {
+        grid-column: 1 / -1;
+      }
+
+      .mobile-status {
+        min-height: 18px;
+        color: rgba(245, 230, 189, 0.76);
+        font-size: 11px;
+        text-align: center;
+      }
+
+      .table-zone {
+        padding: 8px;
+        gap: 8px;
+        overflow-x: hidden;
+      }
+
+      .table-title {
+        min-width: 0;
+        width: min(220px, 100%);
+      }
+
+      .chips {
+        display: flex;
+        gap: 4px;
+        overflow-x: auto;
+        overflow-y: visible;
+        margin: 0 -8px;
+        padding: 4px 10px 8px;
+        scroll-snap-type: x proximity;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+      }
+
+      .chip {
+        width: 44px;
+        min-width: 44px;
+        scroll-snap-align: start;
+      }
+
+      .numbers {
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: repeat(12, 1fr);
+      }
+
+      .roulette-layout {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: 38px auto 36px;
+        width: min(260px, 100%);
+        margin: 0 auto;
+      }
+
+      .zeroes {
+        grid-column: 1;
+        grid-row: 1;
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr;
+        border-right: 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.72);
+      }
+
+      .zeroes.american {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr;
+      }
+
+      .numbers-wrap {
+        grid-column: 1;
+        grid-row: 2;
+      }
+
+      .row-bets {
+        grid-column: 1;
+        grid-row: 3;
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: 1fr;
+        border-left: 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.72);
+      }
+
+      .numbers-wrap {
+        min-height: 520px;
+      }
+
+      .bet-cell,
+      .row-bets button {
+        min-height: 38px;
+        font-size: 10px;
+      }
+
+      .outside button {
+        min-height: 34px;
+        font-size: 11px;
+      }
+
+      .outside,
+      .roulette-layout {
+        min-width: 0;
+      }
+
+      .outside {
+        width: 100%;
+      }
+
+      .roulette-layout {
+        width: min(260px, 100%);
+        margin: 0 auto;
+      }
+
+      .row-bets button {
+        padding: 3px 1px;
+        font-size: 0;
+        writing-mode: horizontal-tb;
+      }
+
+      .row-bets button:nth-child(1)::after {
+        content: "2 to 1";
+        font-size: 9px;
+        line-height: 1;
+      }
+
+      .row-bets button:nth-child(1) {
+        order: 3;
+      }
+
+      .row-bets button:nth-child(2)::after {
+        content: "2 to 1";
+        font-size: 9px;
+        line-height: 1;
+      }
+
+      .row-bets button:nth-child(2) {
+        order: 2;
+      }
+
+      .row-bets button:nth-child(3)::after {
+        content: "2 to 1";
+        font-size: 9px;
+        line-height: 1;
+      }
+
+      .row-bets button:nth-child(3) {
+        order: 1;
+      }
+
+      .color-diamond {
+        width: 22px;
+        height: 14px;
+      }
+
+      .amount {
+        width: 26px;
+        height: 26px;
+        font-size: 8px;
+      }
+
+      .amount::before {
+        inset: 6px;
+      }
+
+      .bet-hotspot {
+        width: 20px;
+        height: 20px;
+      }
+
+      .round-banner {
+        min-width: 76%;
+        padding: 14px 18px;
+        font-size: 28px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section id="wheelZone" class="wheel-zone" aria-label="Roulette wheel and balance">
+      <div class="topbar">
+        <div>
+          <h1>Roulette MVP</h1>
+          <div class="sub">Browser first, Android-ready single file build</div>
+        </div>
+        <div class="mode" aria-label="Roulette mode">
+          <button id="europeanMode" class="active" type="button">EU</button>
+          <button id="americanMode" type="button">US</button>
+        </div>
+      </div>
+
+      <div class="wheel-wrap">
+        <div class="pointer" aria-hidden="true"></div>
+        <div id="wheel" class="wheel">
+          <img src="assets/roulette-wheel.png" alt="">
+          <div id="wheelFace" class="wheel-face" aria-hidden="true"></div>
+        </div>
+        <div id="ball" class="ball" aria-hidden="true"></div>
+        <div id="ballTag" class="ball-tag" aria-hidden="true"></div>
+      </div>
+
+      <div class="result-card">
+        <div id="resultNumber" class="result-number">--</div>
+        <div id="resultMeta" class="result-meta">Place chips and spin</div>
+        <div class="bank">
+          <div class="metric">
+            <span class="label">Balance</span>
+            <span id="balance" class="value">5,000</span>
+          </div>
+          <div class="metric">
+            <span class="label">Total Bet</span>
+            <span id="totalBet" class="value">0</span>
+          </div>
+          <div class="metric">
+            <span class="label">Chip</span>
+            <span id="selectedChip" class="value">100</span>
+          </div>
+        </div>
+        <div class="actions">
+          <button id="spinButton" class="primary" type="button">Spin</button>
+          <button id="undoBetButton" class="secondary" type="button">Undo Bet</button>
+          <button id="lastBetButton" class="secondary" type="button">Last Bet</button>
+          <button id="clearButton" class="secondary" type="button">Clear Bets</button>
+        </div>
+        <div id="outcome" class="outcome" aria-live="polite"></div>
+        <div id="status" class="status" role="status"></div>
+      </div>
+    </section>
+
+    <section id="tableZone" class="table-zone" aria-label="Roulette betting table">
+      <div id="tableTitle" class="table-title">European Roulette</div>
+      <div class="mobile-hud" aria-label="Mobile roulette controls">
+        <div class="mode mobile-mode" aria-label="Mobile roulette mode">
+          <button id="mobileEuropeanMode" class="active" type="button">EU</button>
+          <button id="mobileAmericanMode" type="button">US</button>
+        </div>
+        <div class="mobile-bank">
+          <div class="metric">
+            <span class="label">Balance</span>
+            <span id="mobileBalance" class="value">5,000</span>
+          </div>
+          <div class="metric">
+            <span class="label">Total Bet</span>
+            <span id="mobileTotalBet" class="value">0</span>
+          </div>
+          <div class="metric">
+            <span class="label">Chip</span>
+            <span id="mobileSelectedChip" class="value">100</span>
+          </div>
+        </div>
+        <div class="mobile-actions">
+          <button id="mobileSpinButton" class="primary" type="button">Spin</button>
+          <button id="mobileUndoBetButton" class="secondary" type="button">Undo Bet</button>
+          <button id="mobileLastBetButton" class="secondary" type="button">Last Bet</button>
+          <button id="mobileClearButton" class="secondary" type="button">Clear Bets</button>
+        </div>
+        <div id="mobileStatus" class="mobile-status"></div>
+      </div>
+      <div id="chips" class="chips" aria-label="Chip selection"></div>
+
+      <div class="outside top">
+        <div class="outside-row six">
+          <button type="button" data-bet="range:low">1 to 18</button>
+          <button type="button" data-bet="parity:even">Even</button>
+          <button type="button" class="red-button" data-bet="color:red" aria-label="Red"><span class="color-diamond"></span></button>
+          <button type="button" class="black-button" data-bet="color:black" aria-label="Black"><span class="color-diamond"></span></button>
+          <button type="button" data-bet="parity:odd">Odd</button>
+          <button type="button" data-bet="range:high">19 to 36</button>
+        </div>
+      </div>
+
+      <div class="roulette-layout">
+        <div id="zeroes" class="zeroes"></div>
+        <div id="numbersWrap" class="numbers-wrap">
+          <div id="numbers" class="numbers"></div>
+          <div id="hotspots" class="hotspots"></div>
+        </div>
+        <div class="row-bets">
+          <button type="button" data-bet="row:top">2 to 1</button>
+          <button type="button" data-bet="row:middle">2 to 1</button>
+          <button type="button" data-bet="row:bottom">2 to 1</button>
+        </div>
+      </div>
+
+      <div class="outside bottom">
+        <div class="outside-row">
+          <button type="button" data-bet="dozen:1">1st 12</button>
+          <button type="button" data-bet="dozen:2">2nd 12</button>
+          <button type="button" data-bet="dozen:3">3rd 12</button>
+        </div>
+      </div>
+
+      <div id="history" class="history" aria-label="Spin history"></div>
+    </section>
+  </main>
+
+  <script>
+    const europeanOrder = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
+    const americanOrder = [0, 28, 9, 26, 30, 11, 7, 20, 32, 17, 5, 22, 34, 15, 3, 24, 36, 13, 1, "00", 27, 10, 25, 29, 12, 8, 19, 31, 18, 6, 21, 33, 16, 4, 23, 35, 14, 2];
+    const redNumbers = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]);
+    const chips = [1, 5, 25, 100, 500, 1000, 5000];
+    const chipStyles = {
+      1: ["#c82031", "#791019"],
+      5: ["#244fe0", "#13247f"],
+      25: ["#c58b24", "#7a4b12"],
+      100: ["#2545d8", "#12207d"],
+      500: ["#bf1d2d", "#78101a"],
+      1000: ["#b78425", "#70450f"],
+      5000: ["#c82031", "#791019"]
+    };
+    const payout = {
+      number: 35,
+      split: 17,
+      trio: 11,
+      corner: 8,
+      color: 1,
+      parity: 1,
+      range: 1,
+      dozen: 2,
+      row: 2
+    };
+
+    const els = {
+      wheel: document.getElementById("wheel"),
+      wheelFace: document.getElementById("wheelFace"),
+      wheelZone: document.getElementById("wheelZone"),
+      ball: document.getElementById("ball"),
+      ballTag: document.getElementById("ballTag"),
+      europeanMode: document.getElementById("europeanMode"),
+      americanMode: document.getElementById("americanMode"),
+      mobileEuropeanMode: document.getElementById("mobileEuropeanMode"),
+      mobileAmericanMode: document.getElementById("mobileAmericanMode"),
+      resultNumber: document.getElementById("resultNumber"),
+      resultMeta: document.getElementById("resultMeta"),
+      balance: document.getElementById("balance"),
+      totalBet: document.getElementById("totalBet"),
+      selectedChip: document.getElementById("selectedChip"),
+      mobileBalance: document.getElementById("mobileBalance"),
+      mobileTotalBet: document.getElementById("mobileTotalBet"),
+      mobileSelectedChip: document.getElementById("mobileSelectedChip"),
+      spinButton: document.getElementById("spinButton"),
+      undoBetButton: document.getElementById("undoBetButton"),
+      lastBetButton: document.getElementById("lastBetButton"),
+      clearButton: document.getElementById("clearButton"),
+      mobileSpinButton: document.getElementById("mobileSpinButton"),
+      mobileUndoBetButton: document.getElementById("mobileUndoBetButton"),
+      mobileLastBetButton: document.getElementById("mobileLastBetButton"),
+      mobileClearButton: document.getElementById("mobileClearButton"),
+      outcome: document.getElementById("outcome"),
+      status: document.getElementById("status"),
+      mobileStatus: document.getElementById("mobileStatus"),
+      tableTitle: document.getElementById("tableTitle"),
+      tableZone: document.getElementById("tableZone"),
+      chips: document.getElementById("chips"),
+      zeroes: document.getElementById("zeroes"),
+      numbers: document.getElementById("numbers"),
+      hotspots: document.getElementById("hotspots"),
+      history: document.getElementById("history")
+    };
+
+    const state = {
+      mode: "european",
+      balance: Number(localStorage.getItem("roulette.balance")) || 5000,
+      selectedChip: 100,
+      bets: new Map(),
+      betStack: [],
+      lastBets: new Map(),
+      history: [],
+      rotation: 0,
+      ballRotation: 0,
+      lastResult: null,
+      spinning: false,
+      mobileLayerTimer: null
+    };
+
+    function formatMoney(value) {
+      return value.toLocaleString("en-US");
+    }
+
+    function setStatus(text) {
+      els.status.textContent = text;
+      els.mobileStatus.textContent = text;
+    }
+
+    function getOrder() {
+      return state.mode === "american" ? americanOrder : europeanOrder;
+    }
+
+    function getWheelImageAngle(result) {
+      const order = state.mode === "american" ? americanOrder : europeanOrder;
+      const index = order.findIndex((value) => value === result);
+      const slice = 360 / order.length;
+      return index < 0 ? 0 : index * slice;
+    }
+
+    function getColor(number) {
+      if (number === 0 || number === "00") return "green";
+      return redNumbers.has(number) ? "red" : "black";
+    }
+
+    function betKey(type, value) {
+      if (Array.isArray(value)) return `${type}:${value.join("-")}`;
+      return `${type}:${value}`;
+    }
+
+    function parseBet(key) {
+      const [type, raw] = key.split(":");
+      let value = raw;
+      if (type === "number") value = decodeNumber(raw);
+      if (type === "split" || type === "trio" || type === "corner") value = raw.split("-").map(decodeNumber);
+      return { type, value };
+    }
+
+    function decodeNumber(value) {
+      return value === "00" ? "00" : Number(value);
+    }
+
+    function numberAt(row, column) {
+      return column * 3 + (3 - row);
+    }
+
+    function isMobileLayout() {
+      return window.matchMedia("(max-width: 620px)").matches;
+    }
+
+    function renderChips() {
+      els.chips.innerHTML = "";
+      chips.forEach((chip) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `chip${chip === state.selectedChip ? " active" : ""}`;
+        const [main, dark] = chipStyles[chip] || chipStyles[1];
+        button.style.setProperty("--chip-main", main);
+        button.style.setProperty("--chip-dark", dark);
+        const label = document.createElement("span");
+        label.className = "chip-label";
+        label.textContent = chip >= 1000 ? `${chip / 1000}K` : chip;
+        button.appendChild(label);
+        button.addEventListener("click", () => {
+          state.selectedChip = chip;
+          render();
+        });
+        els.chips.appendChild(button);
+      });
+    }
+
+    function renderWheelFace() {
+      const order = getOrder();
+      const slice = 360 / order.length;
+      const segments = order.map((number, index) => {
+        const color = getColor(number) === "red" ? "#b61f2d" : getColor(number) === "black" ? "#151515" : "#087d45";
+        const start = (index * slice).toFixed(3);
+        const end = ((index + 1) * slice).toFixed(3);
+        return `${color} ${start}deg ${end}deg`;
+      });
+      els.wheelFace.style.background = `
+        radial-gradient(circle, transparent 0 25%, rgba(75, 32, 10, 0.92) 25.5% 52%, transparent 52.5%),
+        conic-gradient(from -${slice / 2}deg, ${segments.join(", ")})
+      `;
+      els.wheelFace.innerHTML = "";
+      order.forEach((number, index) => {
+        const label = document.createElement("span");
+        label.className = `pocket-label ${getColor(number)}`;
+        label.style.setProperty("--angle", `${index * slice}deg`);
+        label.textContent = number;
+        els.wheelFace.appendChild(label);
+      });
+    }
+
+    function renderTable() {
+      const zeroList = state.mode === "american" ? [0, "00"] : [0];
+      const mobile = isMobileLayout();
+      els.zeroes.innerHTML = "";
+      els.zeroes.classList.toggle("american", state.mode === "american");
+      els.numbers.classList.toggle("mobile-layout", mobile);
+      els.hotspots.classList.toggle("mobile-layout", mobile);
+      zeroList.forEach((num) => {
+        els.zeroes.appendChild(createBetCell(num, true));
+      });
+
+      els.numbers.innerHTML = "";
+      if (mobile) {
+        for (let column = 0; column < 12; column += 1) {
+          for (let row = 2; row >= 0; row -= 1) {
+            els.numbers.appendChild(createBetCell(numberAt(row, column), false));
+          }
+        }
+      } else {
+        for (let row = 0; row < 3; row += 1) {
+          for (let column = 0; column < 12; column += 1) {
+            els.numbers.appendChild(createBetCell(numberAt(row, column), false));
+          }
+        }
+      }
+      renderHotspots();
+    }
+
+    function createBetCell(number, isZero) {
+      const key = betKey("number", number);
+      const cell = document.createElement("button");
+      cell.type = "button";
+      cell.className = `bet-cell ${isZero ? "green" : getColor(number)}${state.lastResult === number ? " winner" : ""}`;
+      cell.dataset.bet = key;
+      cell.textContent = number;
+      cell.addEventListener("click", () => placeBet(key));
+      appendAmount(cell, key);
+      return cell;
+    }
+
+    function renderHotspots() {
+      els.hotspots.innerHTML = "";
+      createZeroHotspots();
+
+      for (let row = 1; row <= 3; row += 1) {
+        for (let column = 1; column <= 11; column += 1) {
+          const left = numberAt(row - 1, column - 1);
+          const right = numberAt(row - 1, column);
+          createHotspot("split-x", column, row, betKey("split", [left, right]), `${left}/${right}`);
+        }
+      }
+
+      for (let row = 1; row <= 2; row += 1) {
+        for (let column = 1; column <= 12; column += 1) {
+          const top = numberAt(row - 1, column - 1);
+          const bottom = numberAt(row, column - 1);
+          createHotspot("split-y", column, row, betKey("split", [top, bottom]), `${top}/${bottom}`);
+        }
+      }
+
+      for (let row = 1; row <= 2; row += 1) {
+        for (let column = 1; column <= 11; column += 1) {
+          const topLeft = numberAt(row - 1, column - 1);
+          const topRight = numberAt(row - 1, column);
+          const bottomLeft = numberAt(row, column - 1);
+          const bottomRight = numberAt(row, column);
+          createHotspot("corner", column, row, betKey("corner", [topLeft, topRight, bottomLeft, bottomRight]), `${topLeft}/${topRight}/${bottomLeft}/${bottomRight}`);
+        }
+      }
+    }
+
+    function createZeroHotspots() {
+      createHotspot("zero-split", 0, 1, betKey("split", [0, 3]), "0/3");
+      createHotspot("zero-split", 0, 2, betKey("split", [0, 2]), "0/2");
+      createHotspot("zero-split", 0, 3, betKey("split", [0, 1]), "0/1");
+      createHotspot("zero-trio top", 0, 0, betKey("trio", [0, 3, 2]), "0/3/2");
+      createHotspot("zero-trio bottom", 0, 0, betKey("trio", [0, 2, 1]), "0/2/1");
+    }
+
+    function createHotspot(kind, column, row, key, label) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = `bet-hotspot ${kind}${state.bets.has(key) ? " has-bet" : ""}`;
+      button.dataset.bet = key;
+      button.style.setProperty("--col", column);
+      button.style.setProperty("--row", row);
+      button.setAttribute("aria-label", label);
+      button.addEventListener("click", () => placeBet(key));
+      appendAmount(button, key);
+      els.hotspots.appendChild(button);
+    }
+
+    function renderOutsideAmounts() {
+      document.querySelectorAll(".outside button, .row-bets button").forEach((button) => {
+        button.querySelector(".amount")?.remove();
+        appendAmount(button, button.dataset.bet);
+      });
+    }
+
+    function appendAmount(element, key) {
+      const amount = state.bets.get(key);
+      if (!amount) return;
+      const badge = document.createElement("span");
+      badge.className = "amount";
+      badge.textContent = amount >= 1000 ? `${amount / 1000}K` : amount;
+      element.appendChild(badge);
+    }
+
+    function renderHistory() {
+      els.history.innerHTML = "";
+      state.history.slice(0, 18).forEach((result) => {
+        const item = document.createElement("span");
+        item.className = getColor(result);
+        item.textContent = result;
+        els.history.appendChild(item);
+      });
+    }
+
+    function getTotalBet() {
+      return Array.from(state.bets.values()).reduce((sum, amount) => sum + amount, 0);
+    }
+
+    function placeBet(key) {
+      if (state.spinning) return;
+      hideOutcome();
+      if (state.balance < state.selectedChip) {
+        setStatus("Not enough balance for this chip.");
+        return;
+      }
+      state.balance -= state.selectedChip;
+      state.bets.set(key, (state.bets.get(key) || 0) + state.selectedChip);
+      state.betStack.push({ key, amount: state.selectedChip });
+      setStatus(`Bet ${formatBetLabel(key)} +${formatMoney(state.selectedChip)}`);
+      saveBalance();
+      render();
+    }
+
+    function undoBet() {
+      if (state.spinning) return;
+      const last = state.betStack.pop();
+      if (!last) {
+        setStatus("No bet to undo.");
+        return;
+      }
+      const current = state.bets.get(last.key) || 0;
+      const next = Math.max(0, current - last.amount);
+      if (next === 0) state.bets.delete(last.key);
+      else state.bets.set(last.key, next);
+      state.balance += last.amount;
+      hideOutcome();
+      setStatus(`Undid ${formatBetLabel(last.key)} -${formatMoney(last.amount)}.`);
+      saveBalance();
+      render();
+    }
+
+    function restoreLastBet() {
+      if (state.spinning) return;
+      if (state.lastBets.size === 0) {
+        setStatus("No previous bet yet.");
+        return;
+      }
+      const required = Array.from(state.lastBets.values()).reduce((sum, amount) => sum + amount, 0);
+      if (state.balance < required) {
+        setStatus(`Need ${formatMoney(required)} for Last Bet.`);
+        return;
+      }
+      hideOutcome();
+      state.balance -= required;
+      state.bets.clear();
+      state.betStack = [];
+      state.lastBets.forEach((amount, key) => state.bets.set(key, amount));
+      state.lastBets.forEach((amount, key) => state.betStack.push({ key, amount }));
+      setStatus(`Last Bet restored: ${formatMoney(required)}.`);
+      saveBalance();
+      render();
+    }
+
+    function clearBets() {
+      if (state.spinning) return;
+      const refund = getTotalBet();
+      state.balance += refund;
+      state.bets.clear();
+      state.betStack = [];
+      hideOutcome();
+      setStatus(refund ? `Refunded ${formatMoney(refund)}.` : "No bets to clear.");
+      saveBalance();
+      render();
+    }
+
+    function formatBetLabel(key) {
+      const { type, value } = parseBet(key);
+      if (type === "number") return `number ${value}`;
+      if (type === "split") return `split ${value.join("/")}`;
+      if (type === "trio") return `trio ${value.join("/")}`;
+      if (type === "corner") return `corner ${value.join("/")}`;
+      if (type === "color") return value;
+      if (type === "parity") return value;
+      if (type === "range") return value === "low" ? "1-18" : "19-36";
+      if (type === "dozen") return `${value}${value === "1" ? "st" : value === "2" ? "nd" : "rd"} 12`;
+      if (type === "row") return `${value} 2 to 1`;
+      return key;
+    }
+
+    function spin() {
+      if (state.spinning) return;
+      if (state.bets.size === 0) {
+        setStatus("Place at least one bet.");
+        return;
+      }
+
+      state.spinning = true;
+      hideOutcome();
+      openMobileSpinLayer();
+      state.lastResult = null;
+      state.lastBets = new Map(state.bets);
+      const order = getOrder();
+      const index = Math.floor(Math.random() * order.length);
+      const result = order[index];
+      const resultAngle = getWheelImageAngle(result);
+      state.ballRotation = state.ballRotation - 1440 + normalizeAngle(resultAngle - state.ballRotation);
+
+      els.spinButton.disabled = true;
+      els.undoBetButton.disabled = true;
+      els.lastBetButton.disabled = true;
+      setStatus("Wheel spinning...");
+      els.resultNumber.textContent = "...";
+      els.resultNumber.style.color = "var(--gold-light)";
+      els.resultMeta.textContent = "Ball in motion";
+      if (isMobileLayout()) void els.ball.offsetWidth;
+      els.ball.style.transform = `rotate(${state.ballRotation}deg) translateY(var(--ball-radius))`;
+      els.ballTag.textContent = result;
+      els.ballTag.classList.remove("show");
+      els.ballTag.style.transform = `rotate(${state.ballRotation}deg) translateY(var(--tag-radius))`;
+
+      window.setTimeout(() => settleSpin(result), 4300);
+    }
+
+    function normalizeAngle(angle) {
+      return ((angle + 540) % 360) - 180;
+    }
+
+    function openMobileSpinLayer() {
+      if (!isMobileLayout()) return;
+      window.clearTimeout(state.mobileLayerTimer);
+      document.body.classList.add("mobile-spin-open");
+    }
+
+    function closeMobileSpinLayer() {
+      window.clearTimeout(state.mobileLayerTimer);
+      document.body.classList.remove("mobile-spin-open");
+    }
+
+    function scheduleMobileSpinLayerClose() {
+      if (!isMobileLayout()) return;
+      window.clearTimeout(state.mobileLayerTimer);
+      state.mobileLayerTimer = window.setTimeout(closeMobileSpinLayer, 2600);
+    }
+
+    function settleSpin(result) {
+      const totalBet = getTotalBet();
+      const win = calculateWin(result);
+      const net = win - totalBet;
+      state.balance += win;
+      state.history.unshift(result);
+      state.history = state.history.slice(0, 30);
+      state.lastResult = result;
+      state.betStack = [];
+      state.spinning = false;
+      saveBalance();
+      els.ballTag.classList.add("show");
+
+      els.resultNumber.textContent = result;
+      els.resultNumber.style.color = getColor(result) === "red" ? "#ff5d69" : getColor(result) === "black" ? "#f0f0f0" : "#5cffad";
+      els.resultMeta.textContent = `${getColor(result).toUpperCase()} | ${result === 0 || result === "00" ? "ZERO" : Number(result) % 2 === 0 ? "EVEN" : "ODD"}`;
+      setStatus(win > 0
+        ? `Won ${formatMoney(win)} from ${formatMoney(totalBet)} total bet.`
+        : `No win. Lost ${formatMoney(totalBet)}.`);
+      showOutcome(win > 0
+        ? `Hit ${result} | Payout ${formatMoney(win)} | Net ${net >= 0 ? "+" : ""}${formatMoney(net)}`
+        : `Miss | Lost ${formatMoney(totalBet)}`, win > 0);
+      showRoundEffect(win > 0, result, win > 0 ? `Payout ${formatMoney(win)} | Net ${net >= 0 ? "+" : ""}${formatMoney(net)}` : `Lost ${formatMoney(totalBet)}`);
+      scheduleMobileSpinLayerClose();
+      if (win > 0) {
+        state.bets.clear();
+        els.spinButton.disabled = false;
+        els.undoBetButton.disabled = false;
+        els.lastBetButton.disabled = false;
+        render();
+        return;
+      }
+
+      render();
+      animateLosingChips();
+      window.setTimeout(() => {
+        state.bets.clear();
+        els.spinButton.disabled = false;
+        els.undoBetButton.disabled = false;
+        els.lastBetButton.disabled = false;
+        render();
+      }, 620);
+    }
+
+    function showOutcome(text, isWin) {
+      els.outcome.textContent = text;
+      els.outcome.className = `outcome show ${isWin ? "win" : "loss"}`;
+    }
+
+    function showRoundEffect(isWin, result, detail) {
+      const className = isWin ? "round-win" : "round-loss";
+      els.tableZone.classList.remove("round-win", "round-loss");
+      els.wheelZone.classList.remove("round-win", "round-loss");
+      void els.tableZone.offsetWidth;
+      els.tableZone.classList.add(className);
+      els.wheelZone.classList.add(className);
+
+      const banner = document.createElement("div");
+      banner.className = `round-banner ${isWin ? "win" : "loss"}`;
+      banner.innerHTML = `${isWin ? "Hit" : "Miss"} ${result}<small>${detail}</small>`;
+      els.tableZone.appendChild(banner);
+      window.setTimeout(() => banner.remove(), 1600);
+      window.setTimeout(() => {
+        els.tableZone.classList.remove(className);
+        els.wheelZone.classList.remove(className);
+      }, 1050);
+    }
+
+    function hideOutcome() {
+      closeMobileSpinLayer();
+      els.outcome.textContent = "";
+      els.outcome.className = "outcome";
+      els.ballTag.classList.remove("show");
+      els.tableZone.classList.remove("round-win", "round-loss");
+      els.wheelZone.classList.remove("round-win", "round-loss");
+      document.querySelectorAll(".round-banner").forEach((banner) => banner.remove());
+    }
+
+    function animateLosingChips() {
+      document.querySelectorAll(".amount").forEach((chip) => chip.classList.add("sweep"));
+    }
+
+    function calculateWin(result) {
+      let win = 0;
+      state.bets.forEach((amount, key) => {
+        const bet = parseBet(key);
+        if (isWinningBet(bet, result)) {
+          win += amount * (payout[bet.type] + 1);
+        }
+      });
+      return win;
+    }
+
+    function isWinningBet(bet, result) {
+      if (bet.type === "number") return bet.value === result;
+      if (bet.type === "split" || bet.type === "trio" || bet.type === "corner") return bet.value.includes(result);
+      if (result === 0 || result === "00") return false;
+      if (bet.type === "color") return getColor(result) === bet.value;
+      if (bet.type === "parity") return bet.value === "even" ? result % 2 === 0 : result % 2 === 1;
+      if (bet.type === "range") return bet.value === "low" ? result >= 1 && result <= 18 : result >= 19 && result <= 36;
+      if (bet.type === "dozen") {
+        const group = Math.ceil(result / 12);
+        return String(group) === String(bet.value);
+      }
+      if (bet.type === "row") {
+        if (bet.value === "top") return result % 3 === 0;
+        if (bet.value === "middle") return result % 3 === 2;
+        if (bet.value === "bottom") return result % 3 === 1;
+      }
+      return false;
+    }
+
+    function setMode(mode) {
+      if (state.spinning || state.mode === mode) return;
+      state.balance += getTotalBet();
+      state.bets.clear();
+      state.betStack = [];
+      state.mode = mode;
+      state.lastResult = null;
+      els.europeanMode.classList.toggle("active", mode === "european");
+      els.americanMode.classList.toggle("active", mode === "american");
+      els.mobileEuropeanMode.classList.toggle("active", mode === "european");
+      els.mobileAmericanMode.classList.toggle("active", mode === "american");
+      els.wheel.classList.toggle("american", mode === "american");
+      els.tableTitle.textContent = mode === "american" ? "American Roulette" : "European Roulette";
+      els.resultNumber.textContent = "--";
+      els.resultNumber.style.color = "var(--gold-light)";
+      els.resultMeta.textContent = mode === "american" ? "American table includes 00" : "European table uses single zero";
+      hideOutcome();
+      setStatus("Bets cleared after mode change.");
+      saveBalance();
+      render();
+    }
+
+    function saveBalance() {
+      localStorage.setItem("roulette.balance", String(state.balance));
+    }
+
+    function render() {
+      els.balance.textContent = formatMoney(state.balance);
+      els.totalBet.textContent = formatMoney(getTotalBet());
+      els.selectedChip.textContent = formatMoney(state.selectedChip);
+      els.mobileBalance.textContent = formatMoney(state.balance);
+      els.mobileTotalBet.textContent = formatMoney(getTotalBet());
+      els.mobileSelectedChip.textContent = formatMoney(state.selectedChip);
+      els.mobileStatus.textContent = els.status.textContent;
+      els.spinButton.disabled = state.spinning;
+      els.mobileSpinButton.disabled = state.spinning;
+      els.undoBetButton.disabled = state.spinning || state.betStack.length === 0;
+      els.lastBetButton.disabled = state.spinning || state.lastBets.size === 0;
+      els.mobileUndoBetButton.disabled = state.spinning || state.betStack.length === 0;
+      els.mobileLastBetButton.disabled = state.spinning || state.lastBets.size === 0;
+      els.mobileClearButton.disabled = state.spinning;
+      renderWheelFace();
+      renderChips();
+      renderTable();
+      renderOutsideAmounts();
+      renderHistory();
+    }
+
+    document.querySelectorAll(".outside button, .row-bets button").forEach((button) => {
+      button.addEventListener("click", () => placeBet(button.dataset.bet));
+    });
+    els.spinButton.addEventListener("click", spin);
+    els.undoBetButton.addEventListener("click", undoBet);
+    els.lastBetButton.addEventListener("click", restoreLastBet);
+    els.clearButton.addEventListener("click", clearBets);
+    els.mobileSpinButton.addEventListener("click", spin);
+    els.mobileUndoBetButton.addEventListener("click", undoBet);
+    els.mobileLastBetButton.addEventListener("click", restoreLastBet);
+    els.mobileClearButton.addEventListener("click", clearBets);
+    els.europeanMode.addEventListener("click", () => setMode("european"));
+    els.americanMode.addEventListener("click", () => setMode("american"));
+    els.mobileEuropeanMode.addEventListener("click", () => setMode("european"));
+    els.mobileAmericanMode.addEventListener("click", () => setMode("american"));
+    window.addEventListener("resize", () => renderTable());
+
+    render();
+  </script>
+</body>
+</html>
