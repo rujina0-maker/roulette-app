@@ -1353,9 +1353,28 @@
       }
 
       .mobile-settings-row {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 7;
+      }
+
+      .mobile-settings-row .settings-button {
+        width: 36px;
+        min-height: 36px;
+        padding: 0;
         display: grid;
-        grid-template-columns: 1fr 1.25fr;
-        gap: 6px;
+        place-items: center;
+        border-radius: 50%;
+        font-size: 0;
+        background: rgba(7, 35, 20, 0.92);
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.36);
+      }
+
+      .mobile-settings-row .settings-button::before {
+        content: "\2699";
+        font-size: 20px;
+        line-height: 1;
       }
 
       .mobile-mode {
@@ -1409,6 +1428,7 @@
       .table-title {
         min-width: 0;
         width: min(220px, 100%);
+        padding-right: 36px;
       }
 
       .chips {
@@ -1629,9 +1649,9 @@
           <button id="mobileAutoButton" class="auto-toggle" type="button">오토 OFF</button>
         </div>
         <div class="mobile-settings-row">
-          <button id="mobileSettingsButton" class="settings-button" type="button">설정</button>
-          <div id="mobileRoundTimer" class="round-timer">수동 스핀</div>
+          <button id="mobileSettingsButton" class="settings-button" type="button" aria-label="설정">설정</button>
         </div>
+        <div id="mobileRoundTimer" class="round-timer">수동 스핀</div>
         <div class="mobile-bank">
           <div class="metric">
             <span id="mobileBalanceLabel" class="label">보유금</span>
@@ -1996,6 +2016,7 @@
       els.appSub.textContent = t("appSub");
       els.settingsButton.textContent = t("settings");
       els.mobileSettingsButton.textContent = t("settings");
+      els.mobileSettingsButton.setAttribute("aria-label", t("settings"));
       els.settingsTitle.textContent = t("settings");
       els.languageLabel.textContent = t("language");
       els.modeLabel.textContent = t("mode");
@@ -2291,7 +2312,7 @@
       if (!state.autoMode) return;
       clearRoundTimers();
       state.roundPhase = "betting";
-      state.countdown = 25;
+      state.countdown = 20;
       closeMobileSpinLayer();
       setStatus(t("bettingIsOpen"));
       render();
