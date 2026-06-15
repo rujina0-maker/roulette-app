@@ -115,6 +115,7 @@
       place-items: center;
       min-height: 310px;
       --ball-radius: -126px;
+      --pocket-radius: -106px;
       --tag-radius: -150px;
     }
 
@@ -359,6 +360,26 @@
       grid-column: 1 / -1;
       min-height: 52px;
       font-size: 18px;
+    }
+
+    .round-timer {
+      min-height: 34px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(255, 211, 107, 0.25);
+      background: rgba(0, 0, 0, 0.22);
+      color: var(--cream);
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .round-timer.betting {
+      color: #b9ffd6;
+    }
+
+    .round-timer.closed,
+    .round-timer.spinning {
+      color: var(--gold-light);
     }
 
     .primary,
@@ -1072,6 +1093,7 @@
       .wheel-wrap {
         min-height: 318px;
         --ball-radius: -118px;
+        --pocket-radius: -96px;
         --tag-radius: -140px;
       }
 
@@ -1377,10 +1399,12 @@
         </div>
         <div class="actions">
           <button id="spinButton" class="primary" type="button">Spin</button>
+          <button id="autoButton" class="secondary" type="button">Auto: Off</button>
           <button id="undoBetButton" class="secondary" type="button">Undo Bet</button>
           <button id="lastBetButton" class="secondary" type="button">Last Bet</button>
           <button id="clearButton" class="secondary" type="button">Clear Bets</button>
         </div>
+        <div id="roundTimer" class="round-timer">Manual Spin</div>
         <div id="outcome" class="outcome" aria-live="polite"></div>
         <div id="status" class="status" role="status"></div>
       </div>
@@ -1409,10 +1433,12 @@
         </div>
         <div class="mobile-actions">
           <button id="mobileSpinButton" class="primary" type="button">Spin</button>
+          <button id="mobileAutoButton" class="secondary" type="button">Auto: Off</button>
           <button id="mobileUndoBetButton" class="secondary" type="button">Undo Bet</button>
           <button id="mobileLastBetButton" class="secondary" type="button">Last Bet</button>
           <button id="mobileClearButton" class="secondary" type="button">Clear Bets</button>
         </div>
+        <div id="mobileRoundTimer" class="round-timer">Manual Spin</div>
         <div id="mobileStatus" class="mobile-status"></div>
       </div>
       <div id="chips" class="chips" aria-label="Chip selection"></div>
@@ -1498,16 +1524,20 @@
       mobileTotalBet: document.getElementById("mobileTotalBet"),
       mobileSelectedChip: document.getElementById("mobileSelectedChip"),
       spinButton: document.getElementById("spinButton"),
+      autoButton: document.getElementById("autoButton"),
       undoBetButton: document.getElementById("undoBetButton"),
       lastBetButton: document.getElementById("lastBetButton"),
       clearButton: document.getElementById("clearButton"),
       mobileSpinButton: document.getElementById("mobileSpinButton"),
+      mobileAutoButton: document.getElementById("mobileAutoButton"),
       mobileUndoBetButton: document.getElementById("mobileUndoBetButton"),
       mobileLastBetButton: document.getElementById("mobileLastBetButton"),
       mobileClearButton: document.getElementById("mobileClearButton"),
       outcome: document.getElementById("outcome"),
       status: document.getElementById("status"),
       mobileStatus: document.getElementById("mobileStatus"),
+      roundTimer: document.getElementById("roundTimer"),
+      mobileRoundTimer: document.getElementById("mobileRoundTimer"),
       tableTitle: document.getElementById("tableTitle"),
       tableZone: document.getElementById("tableZone"),
       chips: document.getElementById("chips"),
@@ -1529,7 +1559,12 @@
       ballRotation: 0,
       lastResult: null,
       spinning: false,
-      mobileLayerTimer: null
+      mobileLayerTimer: null,
+      autoMode: false,
+      roundPhase: "manual",
+      countdown: 0,
+      roundTimerId: null,
+      roundTimeoutId: null
     };
 
     function formatMoney(value) {
@@ -1580,6 +1615,10 @@
 
     function isMobileLayout() {
       return window.matchMedia("(max-width: 620px)").matches;
+    }
+
+    function isBettingLocked() {
+      return state.spinning || (state.autoMode && state.roundPhase !== "betting");
     }
 
     function renderChips() {
@@ -1661,6 +1700,7 @@
       cell.className = `bet-cell ${isZero ? "green" : getColor(number)}${state.lastResult === number ? " winner" : ""}`;
       cell.dataset.bet = key;
       cell.textContent = number;
+      cell.disabled = isBettingLocked();
       cell.addEventListener("click", () => placeBet(key));
       appendAmount(cell, key);
       return cell;
@@ -1710,6 +1750,7 @@
       button.type = "button";
       button.className = `bet-hotspot ${kind}${state.bets.has(key) ? " has-bet" : ""}`;
       button.dataset.bet = key;
+      button.disabled = isBettingLocked();
       button.style.setProperty("--col", column);
       button.style.setProperty("--row", row);
       button.setAttribute("aria-label", label);
@@ -1721,6 +1762,7 @@
     function renderOutsideAmounts() {
       document.querySelectorAll(".outside button, .row-bets button").forEach((button) => {
         button.querySelector(".amount")?.remove();
+        button.disabled = isBettingLocked();
         appendAmount(button, button.dataset.bet);
       });
     }
@@ -1748,8 +1790,96 @@
       return Array.from(state.bets.values()).reduce((sum, amount) => sum + amount, 0);
     }
 
+    function clearRoundTimers() {
+      window.clearInterval(state.roundTimerId);
+      window.clearTimeout(state.roundTimeoutId);
+      state.roundTimerId = null;
+      state.roundTimeoutId = null;
+    }
+
+    function setAutoMode(enabled) {
+      if (state.spinning && enabled) return;
+      if (state.spinning && !enabled) {
+        state.autoMode = false;
+        clearRoundTimers();
+        setStatus("Auto will stop after this spin.");
+        render();
+        return;
+      }
+      state.autoMode = enabled;
+      clearRoundTimers();
+      hideOutcome();
+      if (enabled) {
+        startBettingRound();
+      } else {
+        state.roundPhase = "manual";
+        state.countdown = 0;
+        setStatus("Manual spin mode.");
+        render();
+      }
+    }
+
+    function startBettingRound() {
+      if (!state.autoMode) return;
+      clearRoundTimers();
+      state.roundPhase = "betting";
+      state.countdown = 15;
+      setStatus("Betting is open.");
+      render();
+      state.roundTimerId = window.setInterval(() => {
+        state.countdown -= 1;
+        renderRoundTimer();
+        if (state.countdown <= 0) closeBettingRound();
+      }, 1000);
+    }
+
+    function closeBettingRound() {
+      if (!state.autoMode) return;
+      clearRoundTimers();
+      state.roundPhase = "closed";
+      state.countdown = 2;
+      setStatus("No more bets.");
+      render();
+      state.roundTimerId = window.setInterval(() => {
+        state.countdown -= 1;
+        renderRoundTimer();
+        if (state.countdown <= 0) {
+          clearRoundTimers();
+          spin({ auto: true });
+        }
+      }, 1000);
+    }
+
+    function scheduleNextAutoRound() {
+      if (!state.autoMode) return;
+      state.roundPhase = "result";
+      state.countdown = 4;
+      render();
+      state.roundTimerId = window.setInterval(() => {
+        state.countdown -= 1;
+        renderRoundTimer();
+        if (state.countdown <= 0) startBettingRound();
+      }, 1000);
+    }
+
+    function renderRoundTimer() {
+      let text = "Manual Spin";
+      let phase = state.roundPhase;
+      if (state.autoMode && phase === "betting") text = `Betting Open ${state.countdown}s`;
+      if (state.autoMode && phase === "closed") text = `No More Bets ${state.countdown}s`;
+      if (state.autoMode && phase === "spinning") text = "Wheel Spinning";
+      if (state.autoMode && phase === "result") text = `Next Round ${state.countdown}s`;
+      els.roundTimer.textContent = text;
+      els.mobileRoundTimer.textContent = text;
+      els.roundTimer.className = `round-timer ${phase}`;
+      els.mobileRoundTimer.className = `round-timer ${phase}`;
+    }
+
     function placeBet(key) {
-      if (state.spinning) return;
+      if (isBettingLocked()) {
+        setStatus("Betting is closed.");
+        return;
+      }
       hideOutcome();
       if (state.balance < state.selectedChip) {
         setStatus("Not enough balance for this chip.");
@@ -1764,7 +1894,10 @@
     }
 
     function undoBet() {
-      if (state.spinning) return;
+      if (isBettingLocked()) {
+        setStatus("Betting is closed.");
+        return;
+      }
       const last = state.betStack.pop();
       if (!last) {
         setStatus("No bet to undo.");
@@ -1782,7 +1915,10 @@
     }
 
     function restoreLastBet() {
-      if (state.spinning) return;
+      if (isBettingLocked()) {
+        setStatus("Betting is closed.");
+        return;
+      }
       if (state.lastBets.size === 0) {
         setStatus("No previous bet yet.");
         return;
@@ -1804,7 +1940,10 @@
     }
 
     function clearBets() {
-      if (state.spinning) return;
+      if (isBettingLocked()) {
+        setStatus("Betting is closed.");
+        return;
+      }
       const refund = getTotalBet();
       state.balance += refund;
       state.bets.clear();
@@ -1829,14 +1968,17 @@
       return key;
     }
 
-    function spin() {
+    function spin(options = {}) {
       if (state.spinning) return;
-      if (state.bets.size === 0) {
+      if (!options.auto && state.bets.size === 0) {
         setStatus("Place at least one bet.");
         return;
       }
 
       state.spinning = true;
+      state.roundPhase = "spinning";
+      state.countdown = 0;
+      clearRoundTimers();
       hideOutcome();
       openMobileSpinLayer();
       state.lastResult = null;
@@ -1855,11 +1997,16 @@
       els.resultNumber.style.color = "var(--gold-light)";
       els.resultMeta.textContent = "Ball in motion";
       if (isMobileLayout()) void els.ball.offsetWidth;
+      els.ball.style.transition = "transform 4.2s cubic-bezier(.16, .8, .1, 1)";
       els.ball.style.transform = `rotate(${state.ballRotation}deg) translateY(var(--ball-radius))`;
       els.ballTag.textContent = result;
       els.ballTag.classList.remove("show");
       els.ballTag.style.transform = `rotate(${state.ballRotation}deg) translateY(var(--tag-radius))`;
 
+      window.setTimeout(() => {
+        els.ball.style.transition = "transform 680ms cubic-bezier(.2, .9, .18, 1)";
+        els.ball.style.transform = `rotate(${state.ballRotation}deg) translateY(var(--pocket-radius))`;
+      }, 3600);
       window.setTimeout(() => settleSpin(result), 4300);
     }
 
@@ -1900,13 +2047,17 @@
       els.resultNumber.textContent = result;
       els.resultNumber.style.color = getColor(result) === "red" ? "#ff5d69" : getColor(result) === "black" ? "#f0f0f0" : "#5cffad";
       els.resultMeta.textContent = `${getColor(result).toUpperCase()} | ${result === 0 || result === "00" ? "ZERO" : Number(result) % 2 === 0 ? "EVEN" : "ODD"}`;
-      setStatus(win > 0
+      setStatus(totalBet === 0
+        ? `No bets this round. Result ${result}.`
+        : win > 0
         ? `Won ${formatMoney(win)} from ${formatMoney(totalBet)} total bet.`
         : `No win. Lost ${formatMoney(totalBet)}.`);
-      showOutcome(win > 0
+      showOutcome(totalBet === 0
+        ? `No bets | Result ${result}`
+        : win > 0
         ? `Hit ${result} | Payout ${formatMoney(win)} | Net ${net >= 0 ? "+" : ""}${formatMoney(net)}`
         : `Miss | Lost ${formatMoney(totalBet)}`, win > 0);
-      showRoundEffect(win > 0, result, win > 0 ? `Payout ${formatMoney(win)} | Net ${net >= 0 ? "+" : ""}${formatMoney(net)}` : `Lost ${formatMoney(totalBet)}`);
+      showRoundEffect(win > 0, result, totalBet === 0 ? "No bets placed" : win > 0 ? `Payout ${formatMoney(win)} | Net ${net >= 0 ? "+" : ""}${formatMoney(net)}` : `Lost ${formatMoney(totalBet)}`);
       scheduleMobileSpinLayerClose();
       if (win > 0) {
         state.bets.clear();
@@ -1914,6 +2065,7 @@
         els.undoBetButton.disabled = false;
         els.lastBetButton.disabled = false;
         render();
+        scheduleNextAutoRound();
         return;
       }
 
@@ -1925,6 +2077,7 @@
         els.undoBetButton.disabled = false;
         els.lastBetButton.disabled = false;
         render();
+        scheduleNextAutoRound();
       }, 620);
     }
 
@@ -1998,6 +2151,7 @@
 
     function setMode(mode) {
       if (state.spinning || state.mode === mode) return;
+      if (state.autoMode) setAutoMode(false);
       state.balance += getTotalBet();
       state.bets.clear();
       state.betStack = [];
@@ -2030,13 +2184,17 @@
       els.mobileTotalBet.textContent = formatMoney(getTotalBet());
       els.mobileSelectedChip.textContent = formatMoney(state.selectedChip);
       els.mobileStatus.textContent = els.status.textContent;
-      els.spinButton.disabled = state.spinning;
-      els.mobileSpinButton.disabled = state.spinning;
-      els.undoBetButton.disabled = state.spinning || state.betStack.length === 0;
-      els.lastBetButton.disabled = state.spinning || state.lastBets.size === 0;
-      els.mobileUndoBetButton.disabled = state.spinning || state.betStack.length === 0;
-      els.mobileLastBetButton.disabled = state.spinning || state.lastBets.size === 0;
-      els.mobileClearButton.disabled = state.spinning;
+      els.autoButton.textContent = state.autoMode ? "Auto: On" : "Auto: Off";
+      els.mobileAutoButton.textContent = state.autoMode ? "Auto: On" : "Auto: Off";
+      els.spinButton.disabled = state.spinning || state.autoMode;
+      els.mobileSpinButton.disabled = state.spinning || state.autoMode;
+      els.undoBetButton.disabled = isBettingLocked() || state.betStack.length === 0;
+      els.lastBetButton.disabled = isBettingLocked() || state.lastBets.size === 0;
+      els.clearButton.disabled = isBettingLocked();
+      els.mobileUndoBetButton.disabled = isBettingLocked() || state.betStack.length === 0;
+      els.mobileLastBetButton.disabled = isBettingLocked() || state.lastBets.size === 0;
+      els.mobileClearButton.disabled = isBettingLocked();
+      renderRoundTimer();
       renderWheelFace();
       renderChips();
       renderTable();
@@ -2048,10 +2206,12 @@
       button.addEventListener("click", () => placeBet(button.dataset.bet));
     });
     els.spinButton.addEventListener("click", spin);
+    els.autoButton.addEventListener("click", () => setAutoMode(!state.autoMode));
     els.undoBetButton.addEventListener("click", undoBet);
     els.lastBetButton.addEventListener("click", restoreLastBet);
     els.clearButton.addEventListener("click", clearBets);
     els.mobileSpinButton.addEventListener("click", spin);
+    els.mobileAutoButton.addEventListener("click", () => setAutoMode(!state.autoMode));
     els.mobileUndoBetButton.addEventListener("click", undoBet);
     els.mobileLastBetButton.addEventListener("click", restoreLastBet);
     els.mobileClearButton.addEventListener("click", clearBets);
