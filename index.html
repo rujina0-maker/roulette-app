@@ -526,6 +526,22 @@
       animation: timerUrgent 560ms ease-in-out infinite alternate;
     }
 
+    .round-join-count {
+      display: none;
+      min-height: 28px;
+      place-items: center;
+      border: 1px solid rgba(255, 211, 107, 0.28);
+      background: rgba(0, 0, 0, 0.2);
+      color: var(--gold-light);
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .round-join-count.show {
+      display: grid;
+    }
+
     .primary,
     .secondary {
       min-height: 46px;
@@ -1708,6 +1724,7 @@
         </div>
         <button id="autoButton" class="auto-toggle" type="button" hidden>오토 OFF</button>
         <div id="roundTimer" class="round-timer">수동 스핀</div>
+        <div id="roundJoinCount" class="round-join-count"></div>
         <div id="outcome" class="outcome" aria-live="polite"></div>
         <div id="status" class="status" role="status"></div>
       </div>
@@ -1727,6 +1744,7 @@
           <button id="mobileSettingsButton" class="settings-button" type="button" aria-label="설정">설정</button>
         </div>
         <div id="mobileRoundTimer" class="round-timer">수동 스핀</div>
+        <div id="mobileRoundJoinCount" class="round-join-count"></div>
         <div class="mobile-bank">
           <div class="metric">
             <span id="mobileBalanceLabel" class="label">보유금</span>
@@ -1905,6 +1923,8 @@
         noMoreBets: "배팅 마감",
         wheelSpinning: "룰렛 회전 중",
         nextRound: "다음 라운드",
+        joinedRounds: "참가",
+        joinedWaiting: "참가 대기",
         autoStop: "이번 스핀 후 오토를 멈춥니다.",
         manualMode: "수동 스핀 모드입니다.",
         bettingIsOpen: "배팅이 열렸습니다.",
@@ -1970,6 +1990,8 @@
         noMoreBets: "No More Bets",
         wheelSpinning: "Wheel Spinning",
         nextRound: "Next Round",
+        joinedRounds: "Joined",
+        joinedWaiting: "Waiting to join",
         autoStop: "Auto will stop after this spin.",
         manualMode: "Manual spin mode.",
         bettingIsOpen: "Betting is open.",
@@ -2070,6 +2092,8 @@
       mobileStatus: document.getElementById("mobileStatus"),
       roundTimer: document.getElementById("roundTimer"),
       mobileRoundTimer: document.getElementById("mobileRoundTimer"),
+      roundJoinCount: document.getElementById("roundJoinCount"),
+      mobileRoundJoinCount: document.getElementById("mobileRoundJoinCount"),
       tableTitle: document.getElementById("tableTitle"),
       tableZone: document.getElementById("tableZone"),
       chips: document.getElementById("chips"),
@@ -2103,6 +2127,7 @@
       mobileLayerTimer: null,
       autoMode: false,
       autoBetMode: false,
+      autoJoinedRounds: 0,
       roundPhase: "manual",
       countdown: 0,
       roundTimerId: null,
@@ -2445,16 +2470,22 @@
       state.roundTimeoutId = null;
     }
 
+    function getBettingDuration() {
+      return state.autoMode && state.autoBetMode ? 10 : 20;
+    }
+
     function setAutoMode(enabled) {
       if (state.spinning && enabled) return;
       if (state.spinning && !enabled) {
         state.autoMode = false;
+        state.autoJoinedRounds = 0;
         clearRoundTimers();
         setStatus(t("autoStop"));
         render();
         return;
       }
       state.autoMode = enabled;
+      if (enabled) state.autoJoinedRounds = 0;
       clearRoundTimers();
       hideOutcome();
       if (enabled) {
@@ -2462,6 +2493,7 @@
       } else {
         state.roundPhase = "manual";
         state.countdown = 0;
+        state.autoJoinedRounds = 0;
         setStatus(t("manualMode"));
         render();
       }
@@ -2471,7 +2503,7 @@
       if (!state.autoMode) return;
       clearRoundTimers();
       state.roundPhase = "betting";
-      state.countdown = 20;
+      state.countdown = getBettingDuration();
       closeMobileSpinLayer();
       setStatus(t("bettingIsOpen"));
       render();
@@ -2525,6 +2557,18 @@
       els.mobileRoundTimer.textContent = text;
       els.roundTimer.className = className;
       els.mobileRoundTimer.className = className;
+      renderJoinCount();
+    }
+
+    function renderJoinCount() {
+      const show = state.autoMode;
+      const text = state.autoJoinedRounds > 0
+        ? `${t("joinedRounds")} ${state.autoJoinedRounds}${state.lang === "ko" ? "판째" : ""}`
+        : t("joinedWaiting");
+      els.roundJoinCount.textContent = text;
+      els.mobileRoundJoinCount.textContent = text;
+      els.roundJoinCount.classList.toggle("show", show);
+      els.mobileRoundJoinCount.classList.toggle("show", show);
     }
 
     function placeBet(key) {
@@ -2594,6 +2638,9 @@
     function setAutoBetMode(enabled) {
       state.autoBetMode = enabled;
       if (enabled && state.lastBets.size === 0) setStatus(t("autoBetWaiting"));
+      if (enabled && state.autoMode && state.roundPhase === "betting" && state.countdown > getBettingDuration()) {
+        state.countdown = getBettingDuration();
+      }
       if (enabled && state.autoMode && state.roundPhase === "betting" && state.bets.size === 0) applyAutoBet();
       render();
     }
@@ -2675,6 +2722,10 @@
       openMobileSpinLayer();
       state.lastResult = null;
       if (state.bets.size > 0) state.lastBets = new Map(state.bets);
+      if (options.auto && state.bets.size > 0) {
+        state.autoJoinedRounds += 1;
+        renderJoinCount();
+      }
       const order = getOrder();
       const index = Math.floor(Math.random() * order.length);
       const result = order[index];
