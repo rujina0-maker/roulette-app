@@ -1197,6 +1197,94 @@
       background: #08763f;
     }
 
+    .simulation-panel {
+      border: 1px solid rgba(255, 211, 107, 0.24);
+      background: rgba(0, 0, 0, 0.2);
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .simulation-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      color: var(--gold-light);
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .simulation-actions {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .simulation-actions button {
+      min-height: 34px;
+      border: 1px solid rgba(255, 211, 107, 0.34);
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--cream);
+      cursor: pointer;
+      font-weight: 900;
+    }
+
+    .simulation-summary {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .simulation-metric {
+      min-height: 54px;
+      padding: 7px;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .simulation-metric span {
+      display: block;
+      color: rgba(245, 230, 189, 0.64);
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .simulation-metric strong {
+      display: block;
+      margin-top: 5px;
+      color: var(--cream);
+      font-size: 14px;
+    }
+
+    .simulation-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    .simulation-table th,
+    .simulation-table td {
+      padding: 5px 4px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      text-align: right;
+    }
+
+    .simulation-table th:first-child,
+    .simulation-table td:first-child {
+      text-align: left;
+    }
+
+    .profit {
+      color: #9cffbf;
+    }
+
+    .loss {
+      color: #ff9b9b;
+    }
+
     @keyframes popWin {
       0% { transform: scale(1); }
       45% { transform: scale(1.08); }
@@ -1540,6 +1628,10 @@
         min-height: 62px;
       }
 
+      .simulation-summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
       .numbers {
         grid-template-columns: repeat(3, 1fr);
         grid-template-rows: repeat(12, 1fr);
@@ -1829,6 +1921,28 @@
           </table>
         </div>
       </div>
+      <div class="simulation-panel" aria-label="Bet simulation">
+        <div class="simulation-head">
+          <span id="simulationTitle">배팅 시뮬레이션</span>
+          <span id="simulationPattern">현재 배팅 기준</span>
+        </div>
+        <div class="simulation-actions">
+          <button type="button" data-sim-rounds="100">100판</button>
+          <button type="button" data-sim-rounds="300">300판</button>
+          <button type="button" data-sim-rounds="1000">1000판</button>
+        </div>
+        <div id="simulationSummary" class="simulation-summary"></div>
+        <table class="simulation-table">
+          <thead>
+            <tr>
+              <th id="simRoundHead">판</th>
+              <th id="simNetHead">손익</th>
+              <th id="simTotalHead">누적</th>
+            </tr>
+          </thead>
+          <tbody id="simulationRows"></tbody>
+        </table>
+      </div>
     </section>
   </main>
 
@@ -1959,6 +2073,19 @@
         statNumber: "번호",
         statCount: "횟수",
         statGap: "간격",
+        simulationTitle: "배팅 시뮬레이션",
+        simulationPattern: "현재 배팅 기준",
+        simulationEmpty: "시뮬레이션할 배팅을 먼저 올려주세요.",
+        simRound: "판",
+        simNet: "손익",
+        simTotal: "누적",
+        simFinal: "최종 손익",
+        simPeak: "최고 누적",
+        simLow: "최저 누적",
+        simHitRate: "적중률",
+        simPlayed: "진행 판수",
+        simPerRound: "판당 배팅",
+        simBroke: "잔액 부족으로 중단",
         bet: "배팅",
         undid: "취소"
       },
@@ -2026,6 +2153,19 @@
         statNumber: "No.",
         statCount: "Hits",
         statGap: "Gap",
+        simulationTitle: "Bet Simulation",
+        simulationPattern: "Current bet pattern",
+        simulationEmpty: "Place bets before running a simulation.",
+        simRound: "Round",
+        simNet: "Net",
+        simTotal: "Total",
+        simFinal: "Final Net",
+        simPeak: "Peak",
+        simLow: "Low",
+        simHitRate: "Hit Rate",
+        simPlayed: "Rounds",
+        simPerRound: "Bet/Round",
+        simBroke: "Stopped: low balance",
         bet: "Bet",
         undid: "Undid"
       }
@@ -2108,7 +2248,14 @@
       coldNumberHead: document.getElementById("coldNumberHead"),
       coldGapHead: document.getElementById("coldGapHead"),
       hotStats: document.getElementById("hotStats"),
-      coldStats: document.getElementById("coldStats")
+      coldStats: document.getElementById("coldStats"),
+      simulationTitle: document.getElementById("simulationTitle"),
+      simulationPattern: document.getElementById("simulationPattern"),
+      simulationSummary: document.getElementById("simulationSummary"),
+      simulationRows: document.getElementById("simulationRows"),
+      simRoundHead: document.getElementById("simRoundHead"),
+      simNetHead: document.getElementById("simNetHead"),
+      simTotalHead: document.getElementById("simTotalHead")
     };
 
     const state = {
@@ -2172,6 +2319,11 @@
       els.hotCountHead.textContent = t("statCount");
       els.coldNumberHead.textContent = t("statNumber");
       els.coldGapHead.textContent = t("statGap");
+      els.simulationTitle.textContent = t("simulationTitle");
+      els.simulationPattern.textContent = t("simulationPattern");
+      els.simRoundHead.textContent = t("simRound");
+      els.simNetHead.textContent = t("simNet");
+      els.simTotalHead.textContent = t("simTotal");
       els.balanceLabel.textContent = t("balance");
       els.totalBetLabel.textContent = t("totalBet");
       els.chipLabel.textContent = t("chip");
@@ -2881,6 +3033,100 @@
       return win;
     }
 
+    function calculateWinForBets(bets, result) {
+      let win = 0;
+      bets.forEach((amount, key) => {
+        const bet = parseBet(key);
+        if (isWinningBet(bet, result)) win += amount * (payout[bet.type] + 1);
+      });
+      return win;
+    }
+
+    function runSimulation(rounds) {
+      const bets = new Map(state.bets);
+      const totalBet = Array.from(bets.values()).reduce((sum, amount) => sum + amount, 0);
+      els.simulationSummary.innerHTML = "";
+      els.simulationRows.innerHTML = "";
+      if (totalBet <= 0) {
+        const empty = document.createElement("div");
+        empty.className = "simulation-metric";
+        empty.innerHTML = `<span>${t("simulationTitle")}</span><strong>${t("simulationEmpty")}</strong>`;
+        els.simulationSummary.appendChild(empty);
+        return;
+      }
+
+      const order = getOrder();
+      let bankroll = state.balance;
+      let cumulative = 0;
+      let peak = 0;
+      let low = 0;
+      let hits = 0;
+      let played = 0;
+      const checkpoints = [];
+      const checkpointStep = Math.max(1, Math.floor(rounds / 10));
+      let stopped = false;
+      let lastNet = 0;
+
+      for (let round = 1; round <= rounds; round += 1) {
+        if (bankroll < totalBet) {
+          stopped = true;
+          break;
+        }
+        bankroll -= totalBet;
+        const result = order[Math.floor(Math.random() * order.length)];
+        const win = calculateWinForBets(bets, result);
+        bankroll += win;
+        const net = win - totalBet;
+        lastNet = net;
+        played = round;
+        cumulative += net;
+        if (win > 0) hits += 1;
+        peak = Math.max(peak, cumulative);
+        low = Math.min(low, cumulative);
+        if (round === 1 || round % checkpointStep === 0 || round === rounds) {
+          checkpoints.push({ round, net, cumulative });
+        }
+      }
+      if (played > 0 && (!checkpoints.length || checkpoints[checkpoints.length - 1].round !== played)) {
+        checkpoints.push({ round: played, net: lastNet, cumulative });
+      }
+
+      const hitRate = played ? `${Math.round((hits / played) * 1000) / 10}%` : "0%";
+      const metrics = [
+        [t("simFinal"), cumulative],
+        [t("simPeak"), peak],
+        [t("simLow"), low],
+        [t("simHitRate"), hitRate],
+        [t("simPlayed"), stopped ? `${played} / ${rounds}` : played],
+        [t("simPerRound"), totalBet]
+      ];
+      metrics.forEach(([label, value]) => {
+        const item = document.createElement("div");
+        const isNumber = typeof value === "number";
+        const valueClass = isNumber && value < 0 ? "loss" : isNumber && value > 0 ? "profit" : "";
+        item.className = "simulation-metric";
+        item.innerHTML = `<span>${label}</span><strong class="${valueClass}">${isNumber ? formatSigned(value) : value}</strong>`;
+        els.simulationSummary.appendChild(item);
+      });
+      if (stopped) setStatus(t("simBroke"));
+
+      checkpoints.forEach((point) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${point.round}</td>
+          <td class="${point.net < 0 ? "loss" : point.net > 0 ? "profit" : ""}">${formatSigned(point.net)}</td>
+          <td class="${point.cumulative < 0 ? "loss" : point.cumulative > 0 ? "profit" : ""}">${formatSigned(point.cumulative)}</td>
+        `;
+        els.simulationRows.appendChild(row);
+      });
+    }
+
+    function formatSigned(value) {
+      if (value > 0) return `+${formatMoney(value)}`;
+      if (value < 0) return `-${formatMoney(Math.abs(value))}`;
+      return "0";
+    }
+
     function isWinningBet(bet, result) {
       if (bet.type === "number") return bet.value === result;
       if (bet.type === "split" || bet.type === "trio" || bet.type === "corner") return bet.value.includes(result);
@@ -2962,6 +3208,9 @@
 
     document.querySelectorAll(".outside button, .row-bets button").forEach((button) => {
       button.addEventListener("click", () => placeBet(button.dataset.bet));
+    });
+    document.querySelectorAll("[data-sim-rounds]").forEach((button) => {
+      button.addEventListener("click", () => runSimulation(Number(button.dataset.simRounds)));
     });
     els.spinButton.addEventListener("click", spin);
     els.autoButton.addEventListener("click", () => setAutoMode(!state.autoMode));
