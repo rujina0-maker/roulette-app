@@ -430,8 +430,8 @@
 
     .result-summary {
       display: none;
-      padding: 12px 14px;
-      border: 2px solid rgba(255, 255, 255, 0.7);
+      padding: 10px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.68);
       background: rgba(0, 0, 0, 0.28);
       color: #fff2c9;
       font-weight: 900;
@@ -441,7 +441,8 @@
 
     .result-summary.show {
       display: grid;
-      gap: 3px;
+      place-items: center;
+      gap: 4px;
       animation: resultDrop 520ms ease;
     }
 
@@ -456,12 +457,12 @@
     }
 
     .result-summary strong {
-      font-size: clamp(22px, 5vw, 42px);
+      font-size: clamp(20px, 4vw, 36px);
       line-height: 1.05;
     }
 
     .result-summary span {
-      font-size: 14px;
+      font-size: 13px;
       color: rgba(255, 255, 255, 0.9);
     }
 
@@ -1465,9 +1466,9 @@
         inset: 0;
         z-index: 40;
         display: none;
-        align-content: center;
+        align-content: start;
         padding: 12px;
-        gap: 10px;
+        gap: 7px;
         min-height: 100dvh;
         overflow-y: auto;
         background:
@@ -1485,14 +1486,14 @@
       }
 
       .wheel-wrap {
-        min-height: 318px;
-        --ball-radius: -118px;
-        --pocket-radius: -96px;
-        --tag-radius: -140px;
+        min-height: 294px;
+        --ball-radius: -110px;
+        --pocket-radius: -90px;
+        --tag-radius: -130px;
       }
 
       .wheel {
-        width: min(318px, 88vw);
+        width: min(294px, 84vw);
       }
 
       .pocket-label {
@@ -1501,7 +1502,7 @@
         margin-left: -9px;
         margin-top: -6.5px;
         font-size: 8px;
-        transform: rotate(var(--angle)) translateY(-114px) rotate(90deg);
+        transform: rotate(var(--angle)) translateY(-106px) rotate(90deg);
       }
 
       .ball-tag {
@@ -1513,7 +1514,8 @@
       }
 
       .result-card {
-        padding: 10px;
+        padding: 6px 8px 8px;
+        gap: 5px;
       }
 
       .wheel-zone .bank,
@@ -1527,11 +1529,54 @@
       }
 
       body.mobile-spin-open .result-summary.show {
-        order: -1;
+        order: 1;
       }
 
       .result-number {
-        font-size: 38px;
+        font-size: 34px;
+      }
+
+      body.mobile-spin-open .result-card {
+        border-color: rgba(255, 255, 255, 0.08);
+        background: rgba(0, 0, 0, 0.16);
+        box-shadow: none;
+        align-items: center;
+      }
+
+      body.mobile-spin-open .result-card .round-timer,
+      body.mobile-spin-open .result-card .outcome,
+      body.mobile-spin-open .result-card .status {
+        display: none;
+      }
+
+      body.mobile-spin-open .table-zone .round-banner {
+        display: none;
+      }
+
+      body.mobile-spin-open .result-summary {
+        margin-top: 0;
+        padding: 8px 10px;
+        width: 100%;
+        height: 56px;
+        min-height: 0;
+        max-height: 56px;
+        box-sizing: border-box;
+      }
+
+      body.mobile-spin-open .result-summary.show {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        white-space: nowrap;
+      }
+
+      body.mobile-spin-open .result-summary strong {
+        font-size: 18px;
+      }
+
+      body.mobile-spin-open .result-summary span {
+        font-size: 16px;
       }
 
       .bank {
