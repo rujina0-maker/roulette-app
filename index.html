@@ -1756,6 +1756,10 @@
         gap: 6px;
       }
 
+      .simulation-panel {
+        display: none;
+      }
+
       .history {
         max-height: 62px;
         min-height: 62px;
@@ -2007,36 +2011,33 @@
           max(44px, calc(env(safe-area-inset-right) + 8px))
           max(6px, env(safe-area-inset-bottom))
           max(8px, calc(env(safe-area-inset-left) + 8px));
-        display: grid;
-        grid-template-columns: minmax(210px, 25vw) minmax(0, 1fr);
-        gap: 8px;
+        display: block;
       }
 
       .wheel-zone {
-        position: relative;
-        display: grid;
-        grid-template-rows: minmax(132px, 1fr) auto;
-        min-height: 0;
-        height: 100%;
-        padding: 8px;
-        gap: 6px;
-        overflow: hidden;
-        border-color: rgba(255, 211, 107, 0.22);
-        background:
-          radial-gradient(circle at 50% 18%, rgba(217, 164, 65, 0.16), transparent 11rem),
-          rgba(6, 6, 6, 0.84);
+        display: none;
       }
 
       body.mobile-spin-open .wheel-zone {
-        position: relative;
-        inset: auto;
-        z-index: auto;
+        position: fixed;
+        inset: 0;
+        z-index: 40;
         display: grid;
+        grid-template-columns: minmax(240px, 34vw) minmax(220px, 1fr);
+        grid-template-rows: 1fr;
         min-height: 0;
+        height: auto;
+        padding:
+          max(8px, env(safe-area-inset-top))
+          max(48px, calc(env(safe-area-inset-right) + 10px))
+          max(8px, env(safe-area-inset-bottom))
+          max(10px, calc(env(safe-area-inset-left) + 10px));
+        gap: 10px;
+        overflow: hidden;
         background:
-          radial-gradient(circle at 50% 18%, rgba(217, 164, 65, 0.16), transparent 11rem),
-          rgba(6, 6, 6, 0.84);
-        border: 1px solid rgba(255, 211, 107, 0.22);
+          radial-gradient(circle at 26% 45%, rgba(217, 164, 65, 0.18), transparent 18rem),
+          rgba(4, 3, 3, 0.96);
+        border: 0;
       }
 
       .wheel-zone .topbar,
@@ -2061,9 +2062,9 @@
       .wheel-wrap {
         min-height: 0;
         height: 100%;
-        --ball-radius: -82px;
-        --pocket-radius: -70px;
-        --tag-radius: -96px;
+        --ball-radius: -104px;
+        --pocket-radius: -88px;
+        --tag-radius: -126px;
       }
 
       .pointer {
@@ -2074,7 +2075,7 @@
       }
 
       .wheel {
-        width: min(210px, 21vw, 42vh);
+        width: min(300px, 32vw, 74vh);
       }
 
       .pocket-label {
@@ -2083,7 +2084,7 @@
         margin-left: -7px;
         margin-top: -5px;
         font-size: 7px;
-        transform: rotate(var(--angle)) translateY(-75px) rotate(90deg);
+        transform: rotate(var(--angle)) translateY(-98px) rotate(90deg);
       }
 
       .ball {
@@ -2104,6 +2105,7 @@
       }
 
       .result-card {
+        align-self: center;
         padding: 6px;
         gap: 4px;
         background: rgba(0, 0, 0, 0.18);
@@ -2142,10 +2144,11 @@
         min-height: 0;
         height: 100%;
         padding: 6px;
-        gap: 5px;
+        gap: 4px;
         overflow: hidden;
         align-content: stretch;
-        grid-template-rows: auto auto auto auto auto minmax(0, 1fr);
+        grid-template-columns: minmax(108px, 14vw) minmax(0, 1fr);
+        grid-template-rows: auto auto auto minmax(0, 1fr) auto;
         background:
           radial-gradient(circle at 18% 10%, rgba(255, 221, 128, 0.11), transparent 12rem),
           linear-gradient(135deg, rgba(18, 95, 43, 0.84), rgba(5, 32, 21, 0.94));
@@ -2156,6 +2159,8 @@
       }
 
       .mobile-hud {
+        grid-column: 2;
+        grid-row: 1;
         display: grid;
         grid-template-columns: repeat(3, minmax(80px, 1fr)) 1.2fr 1.2fr 1.2fr;
         gap: 4px;
@@ -2260,6 +2265,8 @@
       }
 
       .chips {
+        grid-column: 2;
+        grid-row: 2;
         display: grid;
         grid-template-columns: repeat(7, minmax(42px, 1fr));
         gap: 5px;
@@ -2286,6 +2293,8 @@
 
       .roulette-layout,
       .table-zone.landscape-layout .roulette-layout {
+        grid-column: 2;
+        grid-row: 4;
         width: 100%;
         min-width: 0;
         margin: 0;
@@ -2295,7 +2304,17 @@
 
       .numbers-wrap,
       .table-zone.landscape-layout .numbers-wrap {
-        min-height: clamp(104px, 29vh, 142px);
+        min-height: clamp(118px, 31vh, 156px);
+      }
+
+      .outside.top {
+        grid-column: 2;
+        grid-row: 3;
+      }
+
+      .outside.bottom {
+        grid-column: 2;
+        grid-row: 5;
       }
 
       .bet-cell {
@@ -2332,10 +2351,16 @@
       }
 
       .history {
-        min-height: 30px;
-        max-height: 30px;
-        padding: 3px;
+        grid-column: 1;
+        grid-row: 1 / 6;
+        min-height: 0;
+        max-height: none;
+        height: 100%;
+        padding: 6px;
         gap: 4px;
+        align-content: start;
+        align-items: flex-start;
+        background: rgba(0, 0, 0, 0.28);
       }
 
       .history span {
@@ -2582,6 +2607,13 @@
         </div>
       </div>
       <div class="settings-group">
+        <div id="tableLayoutLabel" class="settings-label">배팅판 방향</div>
+        <div class="segmented">
+          <button id="settingsTableLandscape" class="active" type="button">가로</button>
+          <button id="settingsTablePortrait" type="button">세로</button>
+        </div>
+      </div>
+      <div class="settings-group">
         <div id="autoLabel" class="settings-label">오토 스핀</div>
         <div class="segmented">
           <button id="settingsAutoOff" class="active" type="button">OFF</button>
@@ -2630,6 +2662,9 @@
         settings: "설정",
         language: "언어",
         mode: "룰렛 타입",
+        tableLayout: "배팅판 방향",
+        tableLayoutLandscape: "가로",
+        tableLayoutPortrait: "세로",
         autoSpin: "오토 스핀",
         autoBet: "오토 배팅",
         tableEuropean: "유럽식 룰렛",
@@ -2710,6 +2745,9 @@
         settings: "Settings",
         language: "Language",
         mode: "Roulette Type",
+        tableLayout: "Betting Table",
+        tableLayoutLandscape: "Horizontal",
+        tableLayoutPortrait: "Vertical",
         autoSpin: "Auto Spin",
         autoBet: "Auto Bet",
         tableEuropean: "European Roulette",
@@ -2796,12 +2834,15 @@
       settingsClose: document.getElementById("settingsClose"),
       languageLabel: document.getElementById("languageLabel"),
       modeLabel: document.getElementById("modeLabel"),
+      tableLayoutLabel: document.getElementById("tableLayoutLabel"),
       autoLabel: document.getElementById("autoLabel"),
       autoBetLabel: document.getElementById("autoBetLabel"),
       langKoButton: document.getElementById("langKoButton"),
       langEnButton: document.getElementById("langEnButton"),
       settingsEuropeanMode: document.getElementById("settingsEuropeanMode"),
       settingsAmericanMode: document.getElementById("settingsAmericanMode"),
+      settingsTableLandscape: document.getElementById("settingsTableLandscape"),
+      settingsTablePortrait: document.getElementById("settingsTablePortrait"),
       settingsAutoOff: document.getElementById("settingsAutoOff"),
       settingsAutoOn: document.getElementById("settingsAutoOn"),
       settingsAutoBetOff: document.getElementById("settingsAutoBetOff"),
@@ -2877,6 +2918,7 @@
     const state = {
       lang: localStorage.getItem("roulette.lang") || "ko",
       mode: "european",
+      tableLayout: localStorage.getItem("roulette.tableLayout") || "landscape",
       balance: Number(localStorage.getItem("roulette.balance")) || 5000,
       selectedChip: 100,
       bets: new Map(),
@@ -2927,6 +2969,9 @@
       els.settingsTitle.textContent = t("settings");
       els.languageLabel.textContent = t("language");
       els.modeLabel.textContent = t("mode");
+      els.tableLayoutLabel.textContent = t("tableLayout");
+      els.settingsTableLandscape.textContent = t("tableLayoutLandscape");
+      els.settingsTablePortrait.textContent = t("tableLayoutPortrait");
       els.autoLabel.textContent = t("autoSpin");
       els.autoBetLabel.textContent = t("autoBet");
       els.hotStatsTitle.textContent = t("hotStats");
@@ -2977,6 +3022,8 @@
     function renderSettingsState() {
       els.settingsEuropeanMode.classList.toggle("active", state.mode === "european");
       els.settingsAmericanMode.classList.toggle("active", state.mode === "american");
+      els.settingsTableLandscape.classList.toggle("active", state.tableLayout === "landscape");
+      els.settingsTablePortrait.classList.toggle("active", state.tableLayout === "portrait");
       els.settingsAutoOn.classList.toggle("active", state.autoMode);
       els.settingsAutoOff.classList.toggle("active", !state.autoMode);
       els.settingsAutoBetOn.classList.toggle("active", state.autoBetMode);
@@ -3020,8 +3067,12 @@
       return column * 3 + (3 - row);
     }
 
+    function isPhoneView() {
+      return window.matchMedia("(max-width: 620px), (orientation: landscape) and (max-height: 620px)").matches;
+    }
+
     function isMobileLayout() {
-      return window.matchMedia("(max-width: 620px)").matches;
+      return state.tableLayout === "landscape";
     }
 
     function isBettingLocked() {
@@ -3514,7 +3565,7 @@
       els.resultMeta.textContent = t("ballMotion");
       els.ball.classList.remove("clatter");
       els.wheelWrap.classList.remove("clatter");
-      if (isMobileLayout()) void els.ball.offsetWidth;
+      if (isPhoneView()) void els.ball.offsetWidth;
       els.ball.style.transition = "transform 4.2s cubic-bezier(.16, .8, .1, 1)";
       els.ball.style.transform = `rotate(${state.ballRotation}deg) translateY(var(--ball-radius))`;
       els.ballTag.textContent = result;
@@ -3529,7 +3580,7 @@
     }
 
     function openMobileSpinLayer() {
-      if (!isMobileLayout()) return;
+      if (!isPhoneView()) return;
       window.clearTimeout(state.mobileLayerTimer);
       document.body.classList.add("mobile-spin-open");
     }
@@ -3540,7 +3591,7 @@
     }
 
     function scheduleMobileSpinLayerClose() {
-      if (!isMobileLayout()) return;
+      if (!isPhoneView()) return;
       window.clearTimeout(state.mobileLayerTimer);
       state.mobileLayerTimer = window.setTimeout(closeMobileSpinLayer, 2600);
     }
@@ -3817,6 +3868,14 @@
       render();
     }
 
+    function setTableLayout(layout) {
+      if (!["landscape", "portrait"].includes(layout) || state.tableLayout === layout) return;
+      state.tableLayout = layout;
+      localStorage.setItem("roulette.tableLayout", layout);
+      renderSettingsState();
+      renderTable();
+    }
+
     function saveBalance() {
       localStorage.setItem("roulette.balance", String(state.balance));
     }
@@ -3884,6 +3943,8 @@
     els.langEnButton.addEventListener("click", () => setLanguage("en"));
     els.settingsEuropeanMode.addEventListener("click", () => setMode("european"));
     els.settingsAmericanMode.addEventListener("click", () => setMode("american"));
+    els.settingsTableLandscape.addEventListener("click", () => setTableLayout("landscape"));
+    els.settingsTablePortrait.addEventListener("click", () => setTableLayout("portrait"));
     els.settingsAutoOff.addEventListener("click", () => setAutoMode(false));
     els.settingsAutoOn.addEventListener("click", () => setAutoMode(true));
     els.settingsAutoBetOff.addEventListener("click", () => setAutoBetMode(false));
