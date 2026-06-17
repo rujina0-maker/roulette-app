@@ -2157,6 +2157,43 @@
           linear-gradient(135deg, rgba(18, 95, 43, 0.84), rgba(5, 32, 21, 0.94));
       }
 
+      .settings-overlay {
+        padding: max(6px, env(safe-area-inset-top)) max(50px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+      }
+
+      .settings-panel {
+        width: min(620px, calc(100vw - 120px));
+        max-height: calc(100vh - 14px);
+        padding: 10px;
+        gap: 8px 10px;
+        grid-template-columns: 1fr 1fr;
+        overflow: auto;
+      }
+
+      .settings-head {
+        grid-column: 1 / -1;
+        min-height: 30px;
+      }
+
+      .settings-close {
+        width: 30px;
+        height: 30px;
+        font-size: 18px;
+      }
+
+      .settings-group {
+        gap: 4px;
+      }
+
+      .settings-label {
+        font-size: 10px;
+      }
+
+      .segmented button {
+        min-height: 30px;
+        font-size: 12px;
+      }
+
       .table-title {
         display: none;
       }
