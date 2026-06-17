@@ -428,6 +428,43 @@
       border: 1px solid rgba(255, 255, 255, 0.12);
     }
 
+    .result-summary {
+      display: none;
+      padding: 12px 14px;
+      border: 2px solid rgba(255, 255, 255, 0.7);
+      background: rgba(0, 0, 0, 0.28);
+      color: #fff2c9;
+      font-weight: 900;
+      text-transform: uppercase;
+      box-shadow: 0 16px 34px rgba(0, 0, 0, 0.38);
+    }
+
+    .result-summary.show {
+      display: grid;
+      gap: 3px;
+      animation: resultDrop 520ms ease;
+    }
+
+    .result-summary.win {
+      background: linear-gradient(135deg, rgba(11, 133, 65, 0.96), rgba(232, 181, 56, 0.94));
+      color: #fffbe8;
+    }
+
+    .result-summary.loss {
+      background: linear-gradient(135deg, rgba(158, 20, 31, 0.96), rgba(28, 12, 12, 0.95));
+      color: #ffe7dd;
+    }
+
+    .result-summary strong {
+      font-size: clamp(22px, 5vw, 42px);
+      line-height: 1.05;
+    }
+
+    .result-summary span {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
     .result-number {
       font-size: 46px;
       line-height: 1;
@@ -1369,6 +1406,17 @@
       70% { transform: translateX(-3px); }
     }
 
+    @keyframes resultDrop {
+      from {
+        opacity: 0;
+        transform: translateY(-10px) scale(0.96);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
     @keyframes sweepChip {
       to {
         transform: translate(210px, -85px) scale(0.2) rotate(60deg);
@@ -1472,6 +1520,14 @@
       .wheel-zone .actions,
       .wheel-zone .status {
         display: none;
+      }
+
+      body.mobile-spin-open .wheel-zone .recharge-button {
+        display: none;
+      }
+
+      body.mobile-spin-open .result-summary.show {
+        order: -1;
       }
 
       .result-number {
@@ -1796,6 +1852,7 @@
       </div>
 
       <div class="result-card">
+        <div id="resultSummary" class="result-summary" aria-live="polite"></div>
         <div id="resultNumber" class="result-number">--</div>
         <div id="resultMeta" class="result-meta">칩을 걸고 스핀하세요</div>
         <div class="bank">
@@ -2208,6 +2265,7 @@
       mobileAmericanMode: document.getElementById("mobileAmericanMode"),
       resultNumber: document.getElementById("resultNumber"),
       resultMeta: document.getElementById("resultMeta"),
+      resultSummary: document.getElementById("resultSummary"),
       balanceLabel: document.getElementById("balanceLabel"),
       totalBetLabel: document.getElementById("totalBetLabel"),
       chipLabel: document.getElementById("chipLabel"),
@@ -2691,6 +2749,7 @@
 
     function scheduleNextAutoRound() {
       if (!state.autoMode) return;
+      clearRoundTimers();
       state.roundPhase = "result";
       state.countdown = 4;
       render();
@@ -2890,8 +2949,11 @@
       state.ballRotation = state.ballRotation - 1440 + normalizeAngle(resultAngle - state.ballRotation);
 
       els.spinButton.disabled = true;
+      els.mobileSpinButton.disabled = true;
       els.undoBetButton.disabled = true;
+      els.mobileUndoBetButton.disabled = true;
       els.lastBetButton.disabled = true;
+      els.mobileLastBetButton.disabled = true;
       setStatus(t("wheelSpinning"));
       els.resultNumber.textContent = "...";
       els.resultNumber.style.color = "var(--gold-light)";
@@ -2939,6 +3001,10 @@
       state.lastResult = result;
       state.betStack = [];
       state.spinning = false;
+      if (!state.autoMode) {
+        state.roundPhase = "manual";
+        state.countdown = 0;
+      }
       saveBalance();
       els.ballTag.classList.add("show");
 
@@ -2949,8 +3015,11 @@
         setStatus(`${t("noBetsResult")} ${result}.`);
         state.bets.clear();
         els.spinButton.disabled = false;
+        els.mobileSpinButton.disabled = false;
         els.undoBetButton.disabled = false;
+        els.mobileUndoBetButton.disabled = false;
         els.lastBetButton.disabled = false;
+        els.mobileLastBetButton.disabled = false;
         render();
         closeMobileSpinLayer();
         scheduleNextAutoRound();
@@ -2963,13 +3032,17 @@
       showOutcome(win > 0
         ? `${t("hit")} ${result} | ${t("payout")} ${formatMoney(win)} | ${t("net")} ${net >= 0 ? "+" : ""}${formatMoney(net)}`
         : `${t("miss")} | ${t("lost")} ${formatMoney(totalBet)}`, win > 0);
+      showResultSummary(win > 0, result, win, net, totalBet);
       showRoundEffect(win > 0, result, win > 0 ? `${t("payout")} ${formatMoney(win)} | ${t("net")} ${net >= 0 ? "+" : ""}${formatMoney(net)}` : `${t("lost")} ${formatMoney(totalBet)}`);
       scheduleMobileSpinLayerClose();
       if (win > 0) {
         state.bets.clear();
         els.spinButton.disabled = false;
+        els.mobileSpinButton.disabled = false;
         els.undoBetButton.disabled = false;
+        els.mobileUndoBetButton.disabled = false;
         els.lastBetButton.disabled = false;
+        els.mobileLastBetButton.disabled = false;
         render();
         scheduleNextAutoRound();
         return;
@@ -2980,11 +3053,23 @@
       window.setTimeout(() => {
         state.bets.clear();
         els.spinButton.disabled = false;
+        els.mobileSpinButton.disabled = false;
         els.undoBetButton.disabled = false;
+        els.mobileUndoBetButton.disabled = false;
         els.lastBetButton.disabled = false;
+        els.mobileLastBetButton.disabled = false;
         render();
         scheduleNextAutoRound();
       }, 620);
+    }
+
+    function showResultSummary(isWin, result, win, net, totalBet) {
+      const label = isWin ? t("hit") : t("miss");
+      const detail = isWin
+        ? `${t("payout")} ${formatMoney(win)} | ${t("net")} ${net >= 0 ? "+" : ""}${formatMoney(net)}`
+        : `${t("lost")} ${formatMoney(totalBet)}`;
+      els.resultSummary.innerHTML = `<strong>${label} ${result}</strong><span>${detail}</span>`;
+      els.resultSummary.className = `result-summary show ${isWin ? "win" : "loss"}`;
     }
 
     function showOutcome(text, isWin) {
@@ -3015,6 +3100,8 @@
       closeMobileSpinLayer();
       els.outcome.textContent = "";
       els.outcome.className = "outcome";
+      els.resultSummary.textContent = "";
+      els.resultSummary.className = "result-summary";
       els.ballTag.classList.remove("show");
       els.ball.classList.remove("clatter");
       els.wheelWrap.classList.remove("clatter");
