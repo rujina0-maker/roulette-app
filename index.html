@@ -247,7 +247,7 @@
       border: 0;
       box-shadow:
         0 20px 38px rgba(0, 0, 0, 0.55);
-      transition: transform 4.2s cubic-bezier(.11, .75, .08, 1);
+      transition: transform 6.5s cubic-bezier(.08, .82, .05, 1);
       background: transparent;
     }
 
@@ -372,7 +372,7 @@
       left: calc(50% - 7px);
       transform: rotate(0deg) translateY(var(--ball-radius));
       transform-origin: 7px 7px;
-      transition: transform 4.2s cubic-bezier(.16, .8, .1, 1);
+      transition: transform 6.5s cubic-bezier(.08, .82, .05, 1);
       z-index: 3;
       box-shadow: 0 3px 8px rgba(0, 0, 0, 0.8);
     }
@@ -409,7 +409,7 @@
       transform: rotate(0deg) translateY(var(--tag-radius));
       transform-origin: 20px 20px;
       opacity: 0;
-      transition: transform 4.2s cubic-bezier(.16, .8, .1, 1), opacity 220ms ease;
+      transition: transform 6.5s cubic-bezier(.08, .82, .05, 1), opacity 220ms ease;
       z-index: 4;
       box-shadow: 0 5px 14px rgba(0, 0, 0, 0.52);
       pointer-events: none;
@@ -2678,13 +2678,6 @@
         </div>
       </div>
       <div class="settings-group">
-        <div id="tableLayoutLabel" class="settings-label">배팅판 방향</div>
-        <div class="segmented">
-          <button id="settingsTableLandscape" class="active" type="button">가로</button>
-          <button id="settingsTablePortrait" type="button">세로</button>
-        </div>
-      </div>
-      <div class="settings-group">
         <div id="autoLabel" class="settings-label">오토 스핀</div>
         <div class="segmented">
           <button id="settingsAutoOff" class="active" type="button">OFF</button>
@@ -2733,9 +2726,6 @@
         settings: "설정",
         language: "언어",
         mode: "룰렛 타입",
-        tableLayout: "배팅판 방향",
-        tableLayoutLandscape: "가로",
-        tableLayoutPortrait: "세로",
         autoSpin: "오토 스핀",
         autoBet: "오토 배팅",
         tableEuropean: "유럽식 룰렛",
@@ -2816,9 +2806,6 @@
         settings: "Settings",
         language: "Language",
         mode: "Roulette Type",
-        tableLayout: "Betting Table",
-        tableLayoutLandscape: "Horizontal",
-        tableLayoutPortrait: "Vertical",
         autoSpin: "Auto Spin",
         autoBet: "Auto Bet",
         tableEuropean: "European Roulette",
@@ -2905,15 +2892,12 @@
       settingsClose: document.getElementById("settingsClose"),
       languageLabel: document.getElementById("languageLabel"),
       modeLabel: document.getElementById("modeLabel"),
-      tableLayoutLabel: document.getElementById("tableLayoutLabel"),
       autoLabel: document.getElementById("autoLabel"),
       autoBetLabel: document.getElementById("autoBetLabel"),
       langKoButton: document.getElementById("langKoButton"),
       langEnButton: document.getElementById("langEnButton"),
       settingsEuropeanMode: document.getElementById("settingsEuropeanMode"),
       settingsAmericanMode: document.getElementById("settingsAmericanMode"),
-      settingsTableLandscape: document.getElementById("settingsTableLandscape"),
-      settingsTablePortrait: document.getElementById("settingsTablePortrait"),
       settingsAutoOff: document.getElementById("settingsAutoOff"),
       settingsAutoOn: document.getElementById("settingsAutoOn"),
       settingsAutoBetOff: document.getElementById("settingsAutoBetOff"),
@@ -2989,7 +2973,6 @@
     const state = {
       lang: localStorage.getItem("roulette.lang") || "ko",
       mode: "european",
-      tableLayout: localStorage.getItem("roulette.tableLayout") || "landscape",
       balance: Number(localStorage.getItem("roulette.balance")) || 5000,
       selectedChip: 100,
       bets: new Map(),
@@ -3040,9 +3023,6 @@
       els.settingsTitle.textContent = t("settings");
       els.languageLabel.textContent = t("language");
       els.modeLabel.textContent = t("mode");
-      els.tableLayoutLabel.textContent = t("tableLayout");
-      els.settingsTableLandscape.textContent = t("tableLayoutLandscape");
-      els.settingsTablePortrait.textContent = t("tableLayoutPortrait");
       els.autoLabel.textContent = t("autoSpin");
       els.autoBetLabel.textContent = t("autoBet");
       els.hotStatsTitle.textContent = t("hotStats");
@@ -3093,8 +3073,6 @@
     function renderSettingsState() {
       els.settingsEuropeanMode.classList.toggle("active", state.mode === "european");
       els.settingsAmericanMode.classList.toggle("active", state.mode === "american");
-      els.settingsTableLandscape.classList.toggle("active", state.tableLayout === "landscape");
-      els.settingsTablePortrait.classList.toggle("active", state.tableLayout === "portrait");
       els.settingsAutoOn.classList.toggle("active", state.autoMode);
       els.settingsAutoOff.classList.toggle("active", !state.autoMode);
       els.settingsAutoBetOn.classList.toggle("active", state.autoBetMode);
@@ -3143,7 +3121,7 @@
     }
 
     function isMobileLayout() {
-      return state.tableLayout === "landscape";
+      return true;
     }
 
     function isBettingLocked() {
@@ -3622,7 +3600,7 @@
       const index = Math.floor(Math.random() * order.length);
       const result = order[index];
       const resultAngle = getWheelImageAngle(result);
-      state.ballRotation = state.ballRotation - 1440 + normalizeAngle(resultAngle - state.ballRotation);
+      state.ballRotation = state.ballRotation - 2520 + normalizeAngle(resultAngle - state.ballRotation);
 
       els.spinButton.disabled = true;
       els.mobileSpinButton.disabled = true;
@@ -3637,13 +3615,13 @@
       els.ball.classList.remove("clatter");
       els.wheelWrap.classList.remove("clatter");
       if (isPhoneView()) void els.ball.offsetWidth;
-      els.ball.style.transition = "transform 4.2s cubic-bezier(.16, .8, .1, 1)";
+      els.ball.style.transition = "transform 6.5s cubic-bezier(.08, .82, .05, 1)";
       els.ball.style.transform = `rotate(${state.ballRotation}deg) translateY(var(--ball-radius))`;
       els.ballTag.textContent = result;
       els.ballTag.classList.remove("show");
       els.ballTag.style.transform = `rotate(${state.ballRotation}deg) translateY(var(--tag-radius))`;
 
-      window.setTimeout(() => settleSpin(result), 4300);
+      window.setTimeout(() => settleSpin(result), 6600);
     }
 
     function normalizeAngle(angle) {
@@ -3939,14 +3917,6 @@
       render();
     }
 
-    function setTableLayout(layout) {
-      if (!["landscape", "portrait"].includes(layout) || state.tableLayout === layout) return;
-      state.tableLayout = layout;
-      localStorage.setItem("roulette.tableLayout", layout);
-      renderSettingsState();
-      renderTable();
-    }
-
     function saveBalance() {
       localStorage.setItem("roulette.balance", String(state.balance));
     }
@@ -4014,8 +3984,6 @@
     els.langEnButton.addEventListener("click", () => setLanguage("en"));
     els.settingsEuropeanMode.addEventListener("click", () => setMode("european"));
     els.settingsAmericanMode.addEventListener("click", () => setMode("american"));
-    els.settingsTableLandscape.addEventListener("click", () => setTableLayout("landscape"));
-    els.settingsTablePortrait.addEventListener("click", () => setTableLayout("portrait"));
     els.settingsAutoOff.addEventListener("click", () => setAutoMode(false));
     els.settingsAutoOn.addEventListener("click", () => setAutoMode(true));
     els.settingsAutoBetOff.addEventListener("click", () => setAutoBetMode(false));
