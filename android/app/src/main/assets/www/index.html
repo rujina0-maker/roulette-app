@@ -1950,6 +1950,406 @@
         font-size: 28px;
       }
     }
+
+    @media (orientation: landscape) and (max-height: 620px) {
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        min-height: 100%;
+        overflow: hidden;
+      }
+
+      body {
+        background:
+          radial-gradient(circle at 24% 0%, rgba(255, 211, 107, 0.16), transparent 18rem),
+          linear-gradient(135deg, #120907 0%, #0b2519 48%, #160b08 100%);
+      }
+
+      body.mobile-spin-open {
+        overflow: hidden;
+      }
+
+      .app {
+        width: 100%;
+        height: 100dvh;
+        min-height: 0;
+        margin: 0;
+        padding:
+          max(6px, env(safe-area-inset-top))
+          max(44px, calc(env(safe-area-inset-right) + 8px))
+          max(6px, env(safe-area-inset-bottom))
+          max(8px, calc(env(safe-area-inset-left) + 8px));
+        display: grid;
+        grid-template-columns: minmax(210px, 25vw) minmax(0, 1fr);
+        gap: 8px;
+      }
+
+      .wheel-zone {
+        position: relative;
+        display: grid;
+        grid-template-rows: minmax(132px, 1fr) auto;
+        min-height: 0;
+        height: 100%;
+        padding: 8px;
+        gap: 6px;
+        overflow: hidden;
+        border-color: rgba(255, 211, 107, 0.22);
+        background:
+          radial-gradient(circle at 50% 18%, rgba(217, 164, 65, 0.16), transparent 11rem),
+          rgba(6, 6, 6, 0.84);
+      }
+
+      body.mobile-spin-open .wheel-zone {
+        position: relative;
+        inset: auto;
+        z-index: auto;
+        display: grid;
+        min-height: 0;
+        background:
+          radial-gradient(circle at 50% 18%, rgba(217, 164, 65, 0.16), transparent 11rem),
+          rgba(6, 6, 6, 0.84);
+        border: 1px solid rgba(255, 211, 107, 0.22);
+      }
+
+      .wheel-zone .topbar,
+      .wheel-zone .bank,
+      .wheel-zone .actions,
+      .wheel-zone .status,
+      .wheel-zone .recharge-button,
+      .wheel-zone .round-timer,
+      .wheel-zone .round-join-count,
+      .wheel-zone .outcome,
+      body.mobile-spin-open .wheel-zone .topbar,
+      body.mobile-spin-open .wheel-zone .bank,
+      body.mobile-spin-open .wheel-zone .actions,
+      body.mobile-spin-open .wheel-zone .status,
+      body.mobile-spin-open .wheel-zone .recharge-button,
+      body.mobile-spin-open .wheel-zone .round-timer,
+      body.mobile-spin-open .wheel-zone .round-join-count,
+      body.mobile-spin-open .wheel-zone .outcome {
+        display: none;
+      }
+
+      .wheel-wrap {
+        min-height: 0;
+        height: 100%;
+        --ball-radius: -82px;
+        --pocket-radius: -70px;
+        --tag-radius: -96px;
+      }
+
+      .pointer {
+        top: 0;
+        border-left-width: 12px;
+        border-right-width: 12px;
+        border-top-width: 26px;
+      }
+
+      .wheel {
+        width: min(210px, 21vw, 42vh);
+      }
+
+      .pocket-label {
+        width: 14px;
+        height: 10px;
+        margin-left: -7px;
+        margin-top: -5px;
+        font-size: 7px;
+        transform: rotate(var(--angle)) translateY(-75px) rotate(90deg);
+      }
+
+      .ball {
+        width: 12px;
+        height: 12px;
+        top: calc(50% - 6px);
+        left: calc(50% - 6px);
+        transform-origin: 6px 6px;
+      }
+
+      .ball-tag {
+        width: 30px;
+        height: 30px;
+        top: calc(50% - 15px);
+        left: calc(50% - 15px);
+        transform-origin: 15px 15px;
+        font-size: 12px;
+      }
+
+      .result-card {
+        padding: 6px;
+        gap: 4px;
+        background: rgba(0, 0, 0, 0.18);
+      }
+
+      .result-number {
+        font-size: clamp(26px, 6vh, 42px);
+      }
+
+      .result-meta {
+        font-size: 12px;
+      }
+
+      .result-summary.show,
+      body.mobile-spin-open .result-summary.show {
+        display: grid;
+        min-height: 42px;
+        height: auto;
+        max-height: none;
+        padding: 7px 8px;
+        gap: 2px;
+        white-space: normal;
+      }
+
+      .result-summary strong,
+      body.mobile-spin-open .result-summary strong {
+        font-size: 15px;
+      }
+
+      .result-summary span,
+      body.mobile-spin-open .result-summary span {
+        font-size: 12px;
+      }
+
+      .table-zone {
+        min-height: 0;
+        height: 100%;
+        padding: 6px;
+        gap: 5px;
+        overflow: hidden;
+        align-content: stretch;
+        grid-template-rows: auto auto auto auto auto minmax(0, 1fr);
+        background:
+          radial-gradient(circle at 18% 10%, rgba(255, 221, 128, 0.11), transparent 12rem),
+          linear-gradient(135deg, rgba(18, 95, 43, 0.84), rgba(5, 32, 21, 0.94));
+      }
+
+      .table-title {
+        display: none;
+      }
+
+      .mobile-hud {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(80px, 1fr)) 1.2fr 1.2fr 1.2fr;
+        gap: 4px;
+        padding: 5px;
+        border: 1px solid rgba(255, 211, 107, 0.26);
+        background: rgba(0, 0, 0, 0.18);
+        align-items: stretch;
+      }
+
+      .mobile-settings-row {
+        position: static;
+        grid-column: 1;
+        grid-row: 1;
+      }
+
+      .mobile-settings-row .settings-button {
+        width: 100%;
+        height: 100%;
+        min-height: 32px;
+        border-radius: 0;
+        font-size: 12px;
+      }
+
+      .mobile-settings-row .settings-button::before {
+        content: none;
+      }
+
+      .quick-toggles,
+      .mobile-status {
+        display: none;
+      }
+
+      .mobileRoundTimer,
+      .round-timer {
+        min-height: 0;
+      }
+
+      #mobileRoundTimer {
+        grid-column: 2;
+        grid-row: 1;
+        min-height: 32px;
+        margin: 0;
+        padding: 4px;
+        display: grid;
+        place-items: center;
+        font-size: 12px;
+      }
+
+      #mobileRoundJoinCount {
+        grid-column: 3;
+        grid-row: 1;
+        min-height: 32px;
+        margin: 0;
+        display: grid;
+        place-items: center;
+        border: 1px solid rgba(255, 211, 107, 0.26);
+        color: var(--gold-light);
+        font-size: 12px;
+      }
+
+      .mobile-bank {
+        grid-column: 4 / 7;
+        grid-row: 1;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 4px;
+      }
+
+      .metric {
+        min-height: 32px;
+        padding: 4px 6px;
+      }
+
+      .label {
+        font-size: 9px;
+      }
+
+      .value {
+        font-size: 14px;
+      }
+
+      .mobile-hud .recharge-button {
+        display: none;
+      }
+
+      .mobile-actions {
+        grid-column: 1 / 7;
+        grid-row: 2;
+        display: grid;
+        grid-template-columns: 1.45fr repeat(3, 1fr);
+        gap: 4px;
+      }
+
+      .mobile-actions .primary {
+        grid-column: auto;
+      }
+
+      .mobile-actions .primary,
+      .mobile-actions .secondary {
+        min-height: 34px;
+        font-size: 12px;
+      }
+
+      .chips {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(42px, 1fr));
+        gap: 5px;
+        overflow: visible;
+        margin: 0;
+        padding: 4px 2px 2px;
+      }
+
+      .chip {
+        width: auto;
+        min-width: 0;
+        max-height: 42px;
+      }
+
+      .chip-label {
+        font-size: 11px;
+      }
+
+      .outside button {
+        min-height: 30px;
+        padding: 3px 4px;
+        font-size: 11px;
+      }
+
+      .roulette-layout,
+      .table-zone.landscape-layout .roulette-layout {
+        width: 100%;
+        min-width: 0;
+        margin: 0;
+        grid-template-columns: 44px minmax(0, 1fr) 38px;
+        grid-template-rows: auto;
+      }
+
+      .numbers-wrap,
+      .table-zone.landscape-layout .numbers-wrap {
+        min-height: clamp(104px, 29vh, 142px);
+      }
+
+      .bet-cell {
+        min-height: 0;
+        font-size: 13px;
+      }
+
+      .zeroes,
+      .table-zone.landscape-layout .zeroes {
+        border-right: 1px solid rgba(255, 255, 255, 0.72);
+        border-bottom: 0;
+      }
+
+      .row-bets,
+      .table-zone.landscape-layout .row-bets {
+        border-left: 1px solid rgba(255, 255, 255, 0.72);
+        border-top: 0;
+      }
+
+      .row-bets button,
+      .table-zone.landscape-layout .row-bets button {
+        min-height: 0;
+        padding: 3px 1px;
+        writing-mode: vertical-rl;
+      }
+
+      .row-bets button::after,
+      .table-zone.landscape-layout .row-bets button::after {
+        font-size: 11px;
+      }
+
+      .outside.bottom button {
+        min-height: 28px;
+      }
+
+      .history {
+        min-height: 30px;
+        max-height: 30px;
+        padding: 3px;
+        gap: 4px;
+      }
+
+      .history span {
+        width: 22px;
+        height: 22px;
+        font-size: 10px;
+      }
+
+      .stats-grid,
+      .simulation-panel {
+        display: none;
+      }
+
+      .amount {
+        width: 42px;
+        height: 42px;
+        font-size: 11px;
+      }
+
+      .amount::before {
+        inset: 9px;
+      }
+
+      .outside .amount,
+      .row-bets .amount {
+        width: 32px;
+        height: 32px;
+        font-size: 9px;
+      }
+
+      .bet-hotspot {
+        width: 24px;
+        height: 24px;
+      }
+
+      .round-banner {
+        min-width: 36%;
+        padding: 8px 12px;
+        font-size: 20px;
+      }
+    }
   </style>
 </head>
 <body>
