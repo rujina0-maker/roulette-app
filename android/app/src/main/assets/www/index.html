@@ -1113,11 +1113,14 @@
 
     .color-diamond {
       display: inline-block;
-      width: 28px;
-      height: 18px;
+      width: 18px;
+      height: 12px;
       transform: rotate(45deg);
-      border: 2px solid rgba(255, 255, 255, 0.82);
+      border: 1px solid rgba(255, 255, 255, 0.28);
       vertical-align: middle;
+      box-shadow:
+        inset 0 1px 2px rgba(255, 255, 255, 0.22),
+        0 1px 2px rgba(0, 0, 0, 0.45);
     }
 
     .outside .red-button {
@@ -1956,8 +1959,8 @@
       }
 
       .color-diamond {
-        width: 22px;
-        height: 14px;
+        width: 14px;
+        height: 9px;
       }
 
       .amount {
@@ -2293,12 +2296,16 @@
         min-height: 24px;
         padding: 3px 4px;
         font-size: 10px;
+        border: 0;
+        box-shadow:
+          inset -1px 0 0 rgba(255, 255, 255, 0.42),
+          inset 0 -1px 0 rgba(255, 255, 255, 0.42);
       }
 
       .color-diamond {
-        width: 18px;
-        height: 12px;
-        border-width: 2px;
+        width: 13px;
+        height: 9px;
+        border-width: 1px;
       }
 
       .roulette-layout,
@@ -2311,6 +2318,8 @@
         grid-template-columns: 44px minmax(0, 1fr) 38px;
         grid-template-rows: auto;
         height: 100%;
+        border-width: 1px;
+        box-shadow: none;
       }
 
       .numbers-wrap,
@@ -2322,28 +2331,38 @@
       .outside.top {
         grid-column: 2;
         grid-row: 1;
+        border-width: 1px;
+        border-bottom: 0;
       }
 
       .outside.bottom {
         grid-column: 2;
         grid-row: 3;
+        border-width: 1px;
+        border-top: 0;
       }
 
       .bet-cell {
         min-height: 0;
         font-size: 11px;
+        border: 0;
+        box-shadow:
+          inset -1px 0 0 rgba(255, 255, 255, 0.42),
+          inset 0 -1px 0 rgba(255, 255, 255, 0.42);
       }
 
       .zeroes,
       .table-zone.landscape-layout .zeroes {
-        border-right: 1px solid rgba(255, 255, 255, 0.72);
+        border-right: 0;
         border-bottom: 0;
+        box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.48);
       }
 
       .row-bets,
       .table-zone.landscape-layout .row-bets {
-        border-left: 1px solid rgba(255, 255, 255, 0.72);
+        border-left: 0;
         border-top: 0;
+        box-shadow: inset 1px 0 0 rgba(255, 255, 255, 0.48);
       }
 
       .row-bets button,
@@ -2351,6 +2370,8 @@
         min-height: 0;
         padding: 3px 1px;
         writing-mode: vertical-rl;
+        border: 0;
+        box-shadow: inset 0 -1px 0 rgba(255, 255, 255, 0.42);
       }
 
       .row-bets button::after,
