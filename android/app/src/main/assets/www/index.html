@@ -894,8 +894,8 @@
       position: absolute;
       left: 50%;
       top: 50%;
-      width: 38px;
-      height: 38px;
+      width: 46px;
+      height: 46px;
       border-radius: 50%;
       display: grid;
       place-items: center;
@@ -904,7 +904,7 @@
         radial-gradient(circle, #ffffff 0 38%, transparent 39%),
         conic-gradient(#739a2d 0deg 34deg, #ffffff 34deg 68deg, #739a2d 68deg 102deg, #ffffff 102deg 136deg, #739a2d 136deg 170deg, #ffffff 170deg 204deg, #739a2d 204deg 238deg, #ffffff 238deg 272deg, #739a2d 272deg 306deg, #ffffff 306deg 340deg, #739a2d 340deg);
       color: #1c260b;
-      font-size: 10px;
+      font-size: 12px;
       font-weight: 900;
       border: 1px solid rgba(17, 30, 10, 0.7);
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.55);
@@ -915,7 +915,7 @@
     .amount::before {
       content: "";
       position: absolute;
-      inset: 8px;
+      inset: 10px;
       border-radius: 50%;
       background: #fff;
       border: 1px dotted rgba(0, 0, 0, 0.22);
@@ -932,10 +932,10 @@
       top: auto;
       right: 4px;
       bottom: 4px;
-      width: 30px;
-      height: 30px;
+      width: 36px;
+      height: 36px;
       transform: none;
-      font-size: 9px;
+      font-size: 10px;
     }
 
     .numbers {
@@ -983,8 +983,8 @@
 
     .bet-hotspot {
       position: absolute;
-      width: 24px;
-      height: 24px;
+      width: 34px;
+      height: 34px;
       border: 1px solid rgba(255, 255, 255, 0.74);
       border-radius: 50%;
       background: rgba(255, 255, 255, 0.12);
@@ -1807,6 +1807,69 @@
         margin: 0 auto;
       }
 
+      .table-zone.landscape-layout {
+        overflow-x: hidden;
+        overflow-y: hidden;
+      }
+
+      .table-zone.landscape-layout .outside,
+      .table-zone.landscape-layout .roulette-layout {
+        width: 100%;
+        min-width: 0;
+        margin: 0 auto;
+      }
+
+      .table-zone.landscape-layout .roulette-layout {
+        grid-template-columns: 42px minmax(0, 1fr) 38px;
+        grid-template-rows: auto;
+      }
+
+      .table-zone.landscape-layout .zeroes {
+        grid-column: 1;
+        grid-row: 1;
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr;
+        border-right: 1px solid rgba(255, 255, 255, 0.72);
+        border-bottom: 0;
+      }
+
+      .table-zone.landscape-layout .zeroes.american {
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr 1fr;
+      }
+
+      .table-zone.landscape-layout .numbers {
+        grid-template-columns: repeat(12, 1fr);
+        grid-template-rows: repeat(3, 1fr);
+      }
+
+      .table-zone.landscape-layout .numbers-wrap {
+        grid-column: 2;
+        grid-row: 1;
+        min-height: 138px;
+      }
+
+      .table-zone.landscape-layout .row-bets {
+        grid-column: 3;
+        grid-row: 1;
+        grid-template-columns: 1fr;
+        grid-template-rows: repeat(3, 1fr);
+        border-left: 1px solid rgba(255, 255, 255, 0.72);
+        border-top: 0;
+      }
+
+      .table-zone.landscape-layout .row-bets button {
+        order: initial;
+        min-height: 46px;
+        padding: 6px 2px;
+        font-size: 0;
+        writing-mode: vertical-rl;
+      }
+
+      .table-zone.landscape-layout .row-bets button::after {
+        font-size: 13px;
+      }
+
       .row-bets button {
         padding: 3px 1px;
         font-size: 0;
@@ -1843,24 +1906,42 @@
         order: 1;
       }
 
+      .table-zone.landscape-layout .row-bets button:nth-child(1),
+      .table-zone.landscape-layout .row-bets button:nth-child(2),
+      .table-zone.landscape-layout .row-bets button:nth-child(3) {
+        order: initial;
+      }
+
+      .table-zone.landscape-layout .row-bets button {
+        writing-mode: vertical-rl;
+        min-height: 46px;
+        padding: 6px 2px;
+      }
+
+      .table-zone.landscape-layout .row-bets button:nth-child(1)::after,
+      .table-zone.landscape-layout .row-bets button:nth-child(2)::after,
+      .table-zone.landscape-layout .row-bets button:nth-child(3)::after {
+        font-size: 13px;
+      }
+
       .color-diamond {
         width: 22px;
         height: 14px;
       }
 
       .amount {
-        width: 26px;
-        height: 26px;
-        font-size: 8px;
+        width: 34px;
+        height: 34px;
+        font-size: 10px;
       }
 
       .amount::before {
-        inset: 6px;
+        inset: 8px;
       }
 
       .bet-hotspot {
-        width: 20px;
-        height: 20px;
+        width: 18px;
+        height: 18px;
       }
 
       .round-banner {
@@ -2566,8 +2647,9 @@
 
     function renderTable() {
       const zeroList = state.mode === "american" ? [0, "00"] : [0];
-      const mobile = isMobileLayout();
+      const mobile = false;
       els.zeroes.innerHTML = "";
+      els.tableZone.classList.toggle("landscape-layout", isMobileLayout());
       els.zeroes.classList.toggle("american", state.mode === "american");
       els.numbers.classList.toggle("mobile-layout", mobile);
       els.hotspots.classList.toggle("mobile-layout", mobile);
