@@ -6,3 +6,7 @@ work/*.jpeg
 work/*.webp
 work/*.mp4
 work/*.log
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
